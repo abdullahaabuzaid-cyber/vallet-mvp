@@ -1,0 +1,163 @@
+import type { AppState } from '../types';
+
+const now = Date.now();
+const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
+const minsAgo = (m: number) => new Date(now - m * 60_000).toISOString();
+
+export const SEED: AppState = {
+  role: 'staff',
+  currentEmployeeId: 'emp-1',
+  currentOperatorId: 'op-1',
+  visitSeq: 240880,
+  incidentSeq: 310,
+  handoffSeq: 100,
+  operators: [
+    {
+      id: 'op-1',
+      name: 'فاليه النخبة',
+      licenseNo: 'LIC-AMM-2024-084',
+      status: 'approved',
+      licenseExpiry: '2027-10-31',
+      area: 'عبدون / الشميساني',
+      submittedAt: '2024-09-12T10:00:00.000Z',
+      sites: [
+        { id: 'site-1', name: 'مطعم الشام', area: 'عبدون', lat: 31.9539, lng: 35.8969 },
+        { id: 'site-2', name: 'فندق رويال', area: 'الشميساني', lat: 31.9725, lng: 35.88 },
+      ],
+      docs: [
+        { id: 'd1', name: 'الهوية', status: 'accepted' },
+        { id: 'd2', name: 'الملكية / عقد الإيجار', status: 'accepted' },
+        { id: 'd3', name: 'السجل التجاري', status: 'accepted' },
+        { id: 'd4', name: 'تأمين المسؤولية', status: 'expiring', note: 'تنتهي خلال 30 يوماً' },
+        { id: 'd5', name: 'براءة الذمة', status: 'accepted' },
+      ],
+    },
+    {
+      id: 'op-2',
+      name: 'الصف السريع',
+      status: 'pending',
+      area: 'الدوار السابع',
+      submittedAt: '2026-11-03T09:00:00.000Z',
+      sites: [{ id: 'site-3', name: 'مول المدينة', area: 'الدوار السابع', lat: 31.973, lng: 35.86 }],
+      docs: [
+        { id: 'd1', name: 'الهوية', status: 'accepted' },
+        { id: 'd2', name: 'الملكية / عقد الإيجار', status: 'accepted' },
+        { id: 'd3', name: 'السجل التجاري', status: 'accepted' },
+        { id: 'd4', name: 'تأمين المسؤولية', status: 'accepted' },
+        { id: 'd5', name: 'براءة الذمة', status: 'missing', note: 'ناقصة' },
+      ],
+    },
+    {
+      id: 'op-3',
+      name: 'باركينغ بلس',
+      licenseNo: 'LIC-AMM-2023-041',
+      status: 'suspended',
+      licenseExpiry: '2026-06-01',
+      area: 'جبل الحسين',
+      submittedAt: '2023-05-01T10:00:00.000Z',
+      sites: [
+        { id: 'site-4', name: 'مول الحسين', area: 'جبل الحسين', lat: 31.97, lng: 35.92 },
+        { id: 'site-5', name: 'شارع المدينة', area: 'جبل الحسين', lat: 31.9685, lng: 35.918 },
+        { id: 'site-6', name: 'كافيه وسط البلد', area: 'وسط البلد', lat: 31.951, lng: 35.923 },
+      ],
+      docs: [
+        { id: 'd1', name: 'الهوية', status: 'accepted' },
+        { id: 'd2', name: 'الملكية / عقد الإيجار', status: 'accepted' },
+        { id: 'd3', name: 'السجل التجاري', status: 'accepted' },
+        { id: 'd4', name: 'تأمين المسؤولية', status: 'rejected', note: 'منتهية' },
+        { id: 'd5', name: 'براءة الذمة', status: 'accepted' },
+      ],
+    },
+    {
+      id: 'op-4',
+      name: 'فاليه الأمان',
+      status: 'pending',
+      area: 'خلدا',
+      submittedAt: '2026-11-02T14:00:00.000Z',
+      sites: [{ id: 'site-7', name: 'مجمع خلدا', area: 'خلدا', lat: 31.99, lng: 35.85 }],
+      docs: [
+        { id: 'd1', name: 'الهوية', status: 'accepted' },
+        { id: 'd2', name: 'الملكية / عقد الإيجار', status: 'accepted' },
+        { id: 'd3', name: 'السجل التجاري', status: 'accepted' },
+        { id: 'd4', name: 'تأمين المسؤولية', status: 'accepted' },
+        { id: 'd5', name: 'براءة الذمة', status: 'accepted' },
+      ],
+    },
+    {
+      id: 'op-5',
+      name: 'صفّني',
+      licenseNo: 'LIC-AMM-2025-112',
+      status: 'approved',
+      licenseExpiry: '2027-03-15',
+      area: 'الصويفية',
+      submittedAt: '2025-02-20T10:00:00.000Z',
+      sites: [
+        { id: 'site-8', name: 'مطاعم الصويفية', area: 'الصويفية', lat: 31.955, lng: 35.865 },
+        { id: 'site-9', name: 'عيادات التخصصي', area: 'الصويفية', lat: 31.9575, lng: 35.868 },
+      ],
+      docs: [
+        { id: 'd1', name: 'الهوية', status: 'accepted' },
+        { id: 'd2', name: 'الملكية / عقد الإيجار', status: 'accepted' },
+        { id: 'd3', name: 'السجل التجاري', status: 'accepted' },
+        { id: 'd4', name: 'تأمين المسؤولية', status: 'accepted' },
+        { id: 'd5', name: 'براءة الذمة', status: 'accepted' },
+      ],
+    },
+  ],
+  employees: [
+    { id: 'emp-1', operatorId: 'op-1', name: 'أحمد سالم', nationalId: '9912345671', phone: '0791234567', siteId: 'site-1', active: true },
+    { id: 'emp-2', operatorId: 'op-1', name: 'خالد يوسف', nationalId: '9812345674', phone: '0797654321', siteId: 'site-2', active: true },
+    { id: 'emp-3', operatorId: 'op-1', name: 'سامر علي', nationalId: '9912345677', phone: '0781112233', active: false },
+    { id: 'emp-4', operatorId: 'op-1', name: 'محمود حسن', nationalId: '9923456781', phone: '0793334455', siteId: 'site-1', active: true },
+    { id: 'emp-5', operatorId: 'op-1', name: 'رامي فهد', nationalId: '9834567892', phone: '0775556677', siteId: 'site-2', active: true },
+    { id: 'emp-6', operatorId: 'op-5', name: 'عمر ناصر', nationalId: '9945678903', phone: '0798889900', siteId: 'site-8', active: true },
+  ],
+  visits: [
+    { id: 'v1', receiptNo: 'V-240871', plate: '12-34567', operatorId: 'op-1', siteId: 'site-1', checkInBy: 'emp-1', checkInAt: minsAgo(35), notes: 'خدش باب أمامي' },
+    { id: 'v2', receiptNo: 'V-240866', plate: '22-90112', operatorId: 'op-1', siteId: 'site-1', checkInBy: 'emp-1', checkInAt: hoursAgo(1) },
+    { id: 'v3', receiptNo: 'V-240860', plate: '10-55120', operatorId: 'op-1', siteId: 'site-1', checkInBy: 'emp-4', checkInAt: hoursAgo(1.3) },
+    { id: 'v4', receiptNo: 'V-240855', plate: '31-70045', operatorId: 'op-1', siteId: 'site-1', checkInBy: 'emp-1', checkInAt: hoursAgo(2) },
+    { id: 'v5', receiptNo: 'V-240850', plate: '17-22019', operatorId: 'op-1', siteId: 'site-2', checkInBy: 'emp-2', checkInAt: hoursAgo(2.5), checkOutAt: hoursAgo(0.5), checkOutBy: 'emp-2' },
+    { id: 'v6', receiptNo: 'V-240844', plate: '40-11873', operatorId: 'op-1', siteId: 'site-1', checkInBy: 'emp-1', checkInAt: hoursAgo(3.2), checkOutAt: hoursAgo(1.8), checkOutBy: 'emp-4' },
+    { id: 'v7', receiptNo: 'V-240830', plate: '55-33441', operatorId: 'op-1', siteId: 'site-2', checkInBy: 'emp-2', checkInAt: hoursAgo(4), checkOutAt: hoursAgo(2), checkOutBy: 'emp-5' },
+    { id: 'v8', receiptNo: 'V-240820', plate: '08-11220', operatorId: 'op-1', siteId: 'site-2', checkInBy: 'emp-5', checkInAt: minsAgo(50) },
+    { id: 'v9', receiptNo: 'V-240810', plate: '19-88776', operatorId: 'op-1', siteId: 'site-2', checkInBy: 'emp-2', checkInAt: hoursAgo(1.5) },
+    { id: 'v10', receiptNo: 'V-238102', plate: '33-44556', operatorId: 'op-5', siteId: 'site-8', checkInBy: 'emp-6', checkInAt: hoursAgo(48), checkOutAt: hoursAgo(46), checkOutBy: 'emp-6' },
+  ],
+  handoffs: [],
+  incidents: [
+    {
+      id: 'inc-1',
+      type: 'damage',
+      visitId: 'v1',
+      operatorId: 'op-1',
+      description: 'خدش على الباب الأمامي الأيمن — موثّق عند الدخول',
+      status: 'investigating',
+      createdAt: minsAgo(30),
+      createdBy: 'emp-1',
+      plate: '12-34567',
+    },
+    {
+      id: 'inc-2',
+      type: 'unlicensed',
+      description: 'فاليه عشوائي أمام مطعم في الدوار الثالث — لا ترخيص ظاهر',
+      status: 'fined',
+      createdAt: hoursAgo(20),
+      createdBy: 'gov',
+    },
+    {
+      id: 'inc-3',
+      type: 'lost_keys',
+      visitId: 'v5',
+      operatorId: 'op-1',
+      description: 'تأخر تسليم المفاتيح 15 دقيقة',
+      status: 'closed',
+      createdAt: hoursAgo(5),
+      createdBy: 'emp-2',
+      plate: '17-22019',
+    },
+  ],
+};
+
+/** Demo Amman pin when geolocation is denied */
+export const DEMO_AMMAN_PIN = { lat: 31.9539, lng: 35.9106, label: 'وسط عمّان (تجريبي)' };
