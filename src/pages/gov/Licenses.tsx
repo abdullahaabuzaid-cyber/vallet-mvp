@@ -3,10 +3,11 @@ import { Badge } from '../../components/Layout';
 import { approveLicense, formatDate, rejectLicense, useStore } from '../../store/useStore';
 
 export default function Licenses() {
-  const pending = useStore((s) => s.operators.filter((o) => o.status === 'pending'));
+  const operators = useStore((s) => s.operators);
+  const pending = operators.filter((o) => o.status === 'pending');
   const [selected, setSelected] = useState(pending[0]?.id || '');
   const [reason, setReason] = useState('');
-  const op = useStore((s) => s.operators.find((o) => o.id === selected));
+  const op = operators.find((o) => o.id === selected);
 
   return (
     <div className="card">

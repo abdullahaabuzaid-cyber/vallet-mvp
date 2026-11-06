@@ -4,7 +4,7 @@ import { Badge } from '../../components/Layout';
 
 export default function OperatorDashboard() {
   const opId = useStore((s) => s.currentOperatorId);
-  const op = useStore((s) => s.operators.find((o) => o.id === opId)!);
+  const op = useStore((s) => s.operators.find((o) => o.id === opId));
   const visits = useStore((s) => s.visits.filter((v) => v.operatorId === opId));
   const employees = useStore((s) => s.employees.filter((e) => e.operatorId === opId));
   const incidents = useStore((s) => s.incidents.filter((i) => i.operatorId === opId && i.status !== 'closed'));
@@ -15,6 +15,10 @@ export default function OperatorDashboard() {
   const today = new Date().toDateString();
   const todayVisits = visits.filter((v) => new Date(v.checkInAt).toDateString() === today);
   const activeCars = visits.filter((v) => !v.checkOutAt);
+
+  if (!op) {
+    return <div className="card empty">لا بيانات للمشغّل الحالي</div>;
+  }
 
   return (
     <>

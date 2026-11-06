@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useRef, useCallback, useSyncExternalStore } from 'react';
 import { SEED } from '../data/seed';
 import type {
   AppState,
@@ -9,25 +9,96 @@ import type {
   IncidentType,
   LicenseStatus,
   Role,
+  Site,
   Visit,
 } from '../types';
 
-const KEY = 'vallet-mvp-v3';
+/** Bump when seed shape changes; old keys are cleared safely */
+const KEY = 'vallet-mvp-v4';
+const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3'];
+
+function isFiniteCoord(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n);
+}
+
+function sanitizeSite(site: Partial<Site> | undefined, fallback?: Site): Site | null {
+  if (!site && !fallback) return null;
+  const id = site?.id || fallback?.id;
+  const name = site?.name || fallback?.name;
+  const area = site?.area || fallback?.area || 'عمّان';
+  if (!id || !name) return null;
+  const lat = isFiniteCoord(site?.lat) ? site!.lat : fallback?.lat;
+  const lng = isFiniteCoord(site?.lng) ? site!.lng : fallback?.lng;
+  if (!isFiniteCoord(lat) || !isFiniteCoord(lng)) return null;
+  return { id, name, area, lat, lng };
+}
+
+function migrate(parsed: Partial<AppState>): AppState {
+  const base = structuredClone(SEED);
+  const seedByOp = new Map(base.operators.map((o) => [o.id, o]));
+  const seedSiteById = new Map<string, Site>();
+  for (const o of base.operators) {
+    for (const s of o.sites) seedSiteById.set(s.id, s);
+  }
+
+  const operators =
+    Array.isArray(parsed.operators) && parsed.operators.length
+      ? parsed.operators.map((op) => {
+          const seedOp = seedByOp.get(op.id);
+          const sitesRaw = Array.isArray(op.sites) ? op.sites : seedOp?.sites ?? [];
+          const sites = sitesRaw
+            .map((s) => sanitizeSite(s, s?.id ? seedSiteById.get(s.id) : undefined))
+            .filter((s): s is Site => !!s);
+          return {
+            ...seedOp,
+            ...op,
+            docs: Array.isArray(op.docs) && op.docs.length ? op.docs : seedOp?.docs ?? [],
+            sites: sites.length ? sites : seedOp?.sites ?? [],
+            status: op.status ?? seedOp?.status ?? 'pending',
+            name: op.name || seedOp?.name || 'مشغّل',
+            area: op.area || seedOp?.area || 'عمّان',
+            submittedAt: op.submittedAt || seedOp?.submittedAt || new Date().toISOString(),
+          };
+        })
+      : base.operators;
+
+  const role: Role =
+    parsed.role === 'gov' ||
+    parsed.role === 'operator' ||
+    parsed.role === 'staff' ||
+    parsed.role === 'driver'
+      ? parsed.role
+      : base.role;
+
+  return {
+    ...base,
+    ...parsed,
+    role,
+    operators,
+    employees: Array.isArray(parsed.employees) ? parsed.employees : base.employees,
+    visits: Array.isArray(parsed.visits) ? parsed.visits : base.visits,
+    incidents: Array.isArray(parsed.incidents) ? parsed.incidents : base.incidents,
+    handoffs: Array.isArray(parsed.handoffs) ? parsed.handoffs : [],
+    visitSeq: typeof parsed.visitSeq === 'number' ? parsed.visitSeq : base.visitSeq,
+    incidentSeq: typeof parsed.incidentSeq === 'number' ? parsed.incidentSeq : base.incidentSeq,
+    handoffSeq: typeof parsed.handoffSeq === 'number' ? parsed.handoffSeq : base.handoffSeq,
+    currentEmployeeId: parsed.currentEmployeeId || base.currentEmployeeId,
+    currentOperatorId: parsed.currentOperatorId || base.currentOperatorId,
+  };
+}
 
 function load(): AppState {
   try {
+    for (const k of LEGACY_KEYS) {
+      if (localStorage.getItem(k) != null) localStorage.removeItem(k);
+    }
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<AppState>;
-      return {
-        ...structuredClone(SEED),
-        ...parsed,
-        handoffs: parsed.handoffs ?? [],
-        handoffSeq: parsed.handoffSeq ?? SEED.handoffSeq,
-      };
+      return migrate(parsed);
     }
   } catch {
-    /* ignore */
+    /* ignore corrupt storage */
   }
   return structuredClone(SEED);
 }
@@ -36,7 +107,11 @@ let state: AppState = load();
 const listeners = new Set<() => void>();
 
 function emit() {
-  localStorage.setItem(KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch {
+    /* quota / private mode */
+  }
   listeners.forEach((l) => l());
 }
 
@@ -51,11 +126,30 @@ export function getState() {
 
 export function subscribe(cb: () => void) {
   listeners.add(cb);
-  return () => listeners.delete(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
+/**
+ * Stable snapshots for useSyncExternalStore.
+ * Recomputes only when AppState identity changes so selectors that
+ * return new arrays (.filter/.map) do not trigger React error #185.
+ */
 export function useStore<T>(selector: (s: AppState) => T): T {
-  return useSyncExternalStore(subscribe, () => selector(state), () => selector(state));
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+  const cacheRef = useRef<{ state: AppState; selected: T } | null>(null);
+
+  const getSnapshot = useCallback(() => {
+    const cached = cacheRef.current;
+    if (cached && cached.state === state) return cached.selected;
+    const selected = selectorRef.current(state);
+    cacheRef.current = { state, selected };
+    return selected;
+  }, []);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function setRole(role: Role) {
@@ -93,6 +187,9 @@ export function operatorName(id: string) {
 
 /** Haversine distance in km */
 export function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  if (!isFiniteCoord(a.lat) || !isFiniteCoord(a.lng) || !isFiniteCoord(b.lat) || !isFiniteCoord(b.lng)) {
+    return Number.POSITIVE_INFINITY;
+  }
   const R = 6371;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
@@ -120,6 +217,7 @@ export function licensedLotsNear(origin: { lat: number; lng: number }) {
   for (const op of state.operators) {
     if (op.status !== 'approved') continue;
     for (const site of op.sites) {
+      if (!isFiniteCoord(site.lat) || !isFiniteCoord(site.lng)) continue;
       lots.push({
         siteId: site.id,
         siteName: site.name,
@@ -419,6 +517,7 @@ export function allLotsForMap(origin?: { lat: number; lng: number }) {
   }[] = [];
   for (const op of state.operators) {
     for (const site of op.sites) {
+      if (!isFiniteCoord(site.lat) || !isFiniteCoord(site.lng)) continue;
       lots.push({
         siteId: site.id,
         siteName: site.name,
@@ -439,7 +538,7 @@ export function allLotsForMap(origin?: { lat: number; lng: number }) {
 
 export function unlicensedPins() {
   return state.incidents
-    .filter((i) => i.type === 'unlicensed' && i.lat != null && i.lng != null)
+    .filter((i) => i.type === 'unlicensed' && isFiniteCoord(i.lat) && isFiniteCoord(i.lng))
     .map((i) => ({
       id: i.id,
       area: i.area ?? 'عمّان',

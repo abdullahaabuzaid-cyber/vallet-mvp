@@ -36,17 +36,23 @@ const STATUS_COLOR: Record<LicenseStatus, string> = {
 
 const UNLICENSED_COLOR = '#7c3aed';
 
+function validCoord(lat: number, lng: number) {
+  return Number.isFinite(lat) && Number.isFinite(lng);
+}
+
 function pinIcon(color: string, label?: string) {
-  const text = label ? `<span style="font-size:10px;font-weight:700;color:#fff;line-height:1">${label}</span>` : '';
+  const text = label
+    ? `<span style="font-size:10px;font-weight:700;color:#fff;line-height:1">${label}</span>`
+    : '';
   return L.divIcon({
     className: 'vallet-pin',
     html: `<div style="
-      width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-      background:${color};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);
+      width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      background:${color};border:2px solid #fff;box-shadow:0 4px 12px rgba(11,31,58,.35);
       display:flex;align-items:center;justify-content:center;
     "><span style="transform:rotate(45deg);display:flex;align-items:center;justify-content:center">${text}</span></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
     popupAnchor: [0, -28],
   });
 }
@@ -62,24 +68,43 @@ function FitBounds({
 }) {
   const map = useMap();
   useEffect(() => {
-    const pts: [number, number][] = lots.map((l) => [l.lat, l.lng]);
-    if (user) pts.push([user.lat, user.lng]);
-    (unlicensed ?? []).forEach((u) => pts.push([u.lat, u.lng]));
-    if (!pts.length) {
-      map.setView([31.9539, 35.9106], 12);
-      return;
-    }
-    if (pts.length === 1) {
-      map.setView(pts[0], 14);
-      return;
-    }
-    map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 14 });
+    let alive = true;
+    const run = () => {
+      if (!alive) return;
+      try {
+        const container = map.getContainer();
+        if (!container || !container.isConnected) return;
+        const pts: [number, number][] = lots
+          .filter((l) => validCoord(l.lat, l.lng))
+          .map((l) => [l.lat, l.lng]);
+        if (user && validCoord(user.lat, user.lng)) pts.push([user.lat, user.lng]);
+        (unlicensed ?? [])
+          .filter((u) => validCoord(u.lat, u.lng))
+          .forEach((u) => pts.push([u.lat, u.lng]));
+        if (!pts.length) {
+          map.setView([31.9539, 35.9106], 12);
+          return;
+        }
+        if (pts.length === 1) {
+          map.setView(pts[0], 14);
+          return;
+        }
+        map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 14 });
+      } catch {
+        /* map already unmounted */
+      }
+    };
+    const id = window.setTimeout(run, 0);
+    return () => {
+      alive = false;
+      window.clearTimeout(id);
+    };
   }, [map, lots, user, unlicensed]);
   return null;
 }
 
 function formatDistance(km?: number) {
-  if (km == null) return null;
+  if (km == null || !Number.isFinite(km)) return null;
   if (km < 1) return `${Math.round(km * 1000)} م`;
   return `${km.toFixed(1)} كم`;
 }
@@ -101,10 +126,14 @@ type GovProps = {
 export type LotsMapProps = DriverProps | GovProps;
 
 export function LotsMap(props: LotsMapProps) {
-  const lots = props.lots;
+  const lots = props.lots.filter((l) => validCoord(l.lat, l.lng));
   const user = props.mode === 'driver' ? props.user : null;
-  const unlicensed = props.mode === 'gov' ? props.unlicensed ?? [] : [];
+  const unlicensed = (props.mode === 'gov' ? props.unlicensed ?? [] : []).filter((u) =>
+    validCoord(u.lat, u.lng)
+  );
   const selectedSiteId = props.mode === 'driver' ? props.selectedSiteId : null;
+  // Stable key per mode — avoids Leaflet container reuse under React StrictMode
+  const mapKey = props.mode;
 
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
@@ -119,6 +148,7 @@ export function LotsMap(props: LotsMapProps) {
   return (
     <div className="lots-map-wrap" dir="ltr">
       <MapContainer
+        key={mapKey}
         center={[31.9539, 35.9106]}
         zoom={12}
         className="lots-map"
@@ -131,7 +161,7 @@ export function LotsMap(props: LotsMapProps) {
         />
         <FitBounds lots={lots} user={user} unlicensed={unlicensed} />
 
-        {user && (
+        {user && validCoord(user.lat, user.lng) && (
           <CircleMarker
             center={[user.lat, user.lng]}
             radius={9}
@@ -139,7 +169,7 @@ export function LotsMap(props: LotsMapProps) {
           >
             <Popup>
               <div dir="rtl" className="map-popup">
-                <strong>موقعك</strong>
+                <strong>موقعك الحالي</strong>
               </div>
             </Popup>
           </CircleMarker>
@@ -153,28 +183,27 @@ export function LotsMap(props: LotsMapProps) {
               : icons.get(lot.status) ?? icons.get('approved')!;
           return (
             <Marker key={lot.siteId} position={[lot.lat, lot.lng]} icon={icon}>
-              <Popup>
+              <Popup className="vallet-popup">
                 <div dir="rtl" className="map-popup">
-                  <strong>{lot.siteName}</strong>
+                  <strong className="map-popup-title">{lot.siteName}</strong>
                   <div className="muted">{lot.area}</div>
-                  <div>
+                  <div className="map-popup-row">
                     المشغّل: <strong>{lot.operatorName}</strong>
                   </div>
                   {lot.licenseNo && <div className="muted">ترخيص: {lot.licenseNo}</div>}
-                  <div>
+                  <div className="map-popup-row">
                     الحالة:{' '}
-                    <span style={{ color: STATUS_COLOR[lot.status], fontWeight: 600 }}>
+                    <span style={{ color: STATUS_COLOR[lot.status], fontWeight: 700 }}>
                       {STATUS_LABELS[lot.status]}
                     </span>
                   </div>
                   {formatDistance(lot.distanceKm) && (
-                    <div>المسافة: {formatDistance(lot.distanceKm)}</div>
+                    <div className="map-popup-row">المسافة: {formatDistance(lot.distanceKm)}</div>
                   )}
                   {props.mode === 'driver' && lot.status === 'approved' && (
                     <button
                       type="button"
-                      className="btn btn-primary"
-                      style={{ marginTop: 8, width: '100%' }}
+                      className="btn btn-primary map-popup-btn"
                       onClick={() => props.onRequestHandoff(lot.siteId)}
                     >
                       طلب تسليم السيارة
@@ -188,12 +217,12 @@ export function LotsMap(props: LotsMapProps) {
 
         {unlicensed.map((u) => (
           <Marker key={u.id} position={[u.lat, u.lng]} icon={icons.get('unlicensed')!}>
-            <Popup>
+            <Popup className="vallet-popup">
               <div dir="rtl" className="map-popup">
-                <strong>بلاغ فاليه غير مرخّص</strong>
+                <strong className="map-popup-title">بلاغ فاليه غير مرخّص</strong>
                 <div>{u.area}</div>
                 <div className="muted">{u.description}</div>
-                <div style={{ color: UNLICENSED_COLOR, fontWeight: 600 }}>{u.statusLabel}</div>
+                <div style={{ color: UNLICENSED_COLOR, fontWeight: 700 }}>{u.statusLabel}</div>
               </div>
             </Popup>
           </Marker>

@@ -51,9 +51,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark">ف</div>
-          <div>
-            فاليت
+          <div className="brand-mark" aria-hidden>
+            <span className="brand-mark-letter">ف</span>
+          </div>
+          <div className="brand-text">
+            <span className="brand-name">فاليت</span>
             <small>هيئة تنظيم الفاليه — عمّان</small>
           </div>
         </div>
@@ -64,6 +66,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className={role === r ? 'active' : ''}
               onClick={() => setRole(r)}
               type="button"
+              role="tab"
+              aria-selected={role === r}
             >
               {ROLE_LABELS[r]}
             </button>
@@ -74,14 +78,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="main">
         <div className="demo-banner">
           <span>
-            وضع تجريبي — البيانات محفوظة محلياً. بدّل الدور: حكومة / مشغّل / موظف / سائق
+            وضع تجريبي — البيانات محفوظة محلياً على جهازك. بدّل الدور من الشريط أعلاه.
           </span>
-          <button className="btn" type="button" onClick={resetDemo}>
+          <button className="btn btn-sm" type="button" onClick={resetDemo}>
             إعادة البيانات
           </button>
         </div>
 
-        <nav className="nav-tabs">
+        <nav className="nav-tabs" aria-label="أقسام الدور">
           {NAV[role].map((item) => {
             const isRequests = item.to === '/operator/requests';
             const label =
@@ -102,6 +106,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {children}
       </main>
+
+      <footer className="app-footer">
+        <span>فاليت · منصة حكومية لتنظيم الفاليه في عمّان</span>
+      </footer>
     </div>
   );
 }
