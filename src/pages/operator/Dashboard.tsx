@@ -22,14 +22,26 @@ export default function OperatorDashboard() {
 
   return (
     <>
+      <div className="card" style={{ background: 'var(--primary-soft)', borderColor: '#c5d8ff' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>سجل السيارات</h3>
+            <p className="muted" style={{ margin: '4px 0 0' }}>
+              لوحة، دخول/خروج، استلام وتسليم، وخط زمني كامل لكل زيارة
+            </p>
+          </div>
+          <Link to="/operator/visits" className="btn btn-primary">
+            فتح السجل
+          </Link>
+        </div>
+      </div>
+
       {pendingHandoffs.length > 0 && (
         <div className="card" style={{ borderColor: 'var(--warning)', background: 'var(--warning-soft)' }}>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <div>
               <Badge tone="warn">{pendingHandoffs.length} طلب تسليم جديد</Badge>
-              <div style={{ marginTop: 6 }}>
-                سائقون بانتظار قبول تسليم سياراتهم — راجع الصندوق فوراً.
-              </div>
+              <div style={{ marginTop: 6 }}>سائقون بانتظار قبول تسليم سياراتهم — راجع الصندوق فوراً.</div>
             </div>
             <Link to="/operator/requests" className="btn btn-primary">
               فتح الطلبات
@@ -39,11 +51,26 @@ export default function OperatorDashboard() {
       )}
 
       <div className="tiles">
-        <div className="tile"><div className="n">{todayVisits.length}</div><div className="l">زيارات اليوم</div></div>
-        <div className="tile"><div className="n">{activeCars.length}</div><div className="l">سيارات حالية</div></div>
-        <div className="tile"><div className="n">{employees.filter((e) => e.active).length}</div><div className="l">موظفون نشطون</div></div>
-        <div className="tile"><div className="n">{pendingHandoffs.length}</div><div className="l">طلبات سائقين</div></div>
-        <div className="tile"><div className="n">{incidents.length}</div><div className="l">بلاغات مفتوحة</div></div>
+        <div className="tile">
+          <div className="n">{todayVisits.length}</div>
+          <div className="l">زيارات اليوم</div>
+        </div>
+        <div className="tile">
+          <div className="n">{activeCars.length}</div>
+          <div className="l">سيارات حالية</div>
+        </div>
+        <div className="tile">
+          <div className="n">{employees.filter((e) => e.active).length}</div>
+          <div className="l">موظفون نشطون</div>
+        </div>
+        <div className="tile">
+          <div className="n">{pendingHandoffs.length}</div>
+          <div className="l">طلبات سائقين</div>
+        </div>
+        <div className="tile">
+          <div className="n">{incidents.length}</div>
+          <div className="l">بلاغات مفتوحة</div>
+        </div>
       </div>
 
       <div className="card">
@@ -64,7 +91,9 @@ export default function OperatorDashboard() {
               const siteEmp = employees.filter((e) => e.siteId === site.id && e.active).length;
               return (
                 <tr key={site.id}>
-                  <td>{site.name} — {site.area}</td>
+                  <td>
+                    {site.name} — {site.area}
+                  </td>
                   <td>{siteToday}</td>
                   <td>{siteActive}</td>
                   <td>{siteEmp}</td>
@@ -76,7 +105,12 @@ export default function OperatorDashboard() {
       </div>
 
       <div className="card">
-        <h3>آخر الزيارات النشطة</h3>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0 }}>آخر الزيارات النشطة</h3>
+          <Link to="/operator/visits" className="btn btn-sm">
+            سجل السيارات
+          </Link>
+        </div>
         <table className="table">
           <thead>
             <tr>

@@ -13,13 +13,14 @@ import type {
   Role,
   Site,
   Visit,
+  VisitExtras,
 } from '../types';
 import { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS } from '../types';
 export { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS };
 
 /** Bump when seed shape changes; old keys are cleared safely */
-const KEY = 'vallet-mvp-v7';
-const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4', 'vallet-mvp-v5', 'vallet-mvp-v6'];
+const KEY = 'vallet-mvp-v8';
+const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4', 'vallet-mvp-v5', 'vallet-mvp-v6', 'vallet-mvp-v7'];
 
 function isFiniteCoord(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n);
@@ -258,9 +259,14 @@ export function licensedLotsNear(origin: { lat: number; lng: number }) {
   return lots.sort((a, b) => a.distanceKm - b.distanceKm);
 }
 
-export function checkIn(plate: string, notes: string): Visit {
+export function checkIn(plate: string, notesOrExtras: string | VisitExtras = '', extras?: VisitExtras): Visit {
   const emp = state.employees.find((e) => e.id === state.currentEmployeeId)!;
   const seq = state.visitSeq + 1;
+  const extra: VisitExtras =
+    typeof notesOrExtras === 'string'
+      ? { ...(extras || {}), notes: notesOrExtras }
+      : { ...notesOrExtras, ...(extras || {}) };
+  const now = new Date().toISOString();
   const visit: Visit = {
     id: `v-${seq}`,
     receiptNo: `V-${seq}`,
@@ -268,8 +274,15 @@ export function checkIn(plate: string, notes: string): Visit {
     operatorId: emp.operatorId,
     siteId: emp.siteId || state.operators.find((o) => o.id === emp.operatorId)!.sites[0].id,
     checkInBy: emp.id,
-    checkInAt: new Date().toISOString(),
-    notes: notes.trim() || undefined,
+    checkInAt: now,
+    parkedAt: extra.parkedAt || now,
+    notes: extra.notes?.trim() || undefined,
+    carMake: extra.carMake?.trim() || undefined,
+    carModel: extra.carModel?.trim() || undefined,
+    carColor: extra.carColor?.trim() || undefined,
+    ownerPhone: extra.ownerPhone?.trim() || undefined,
+    photoThumb: extra.photoThumb || undefined,
+    handoffId: extra.handoffId,
   };
   set((s) => ({
     ...s,
@@ -277,6 +290,92 @@ export function checkIn(plate: string, notes: string): Visit {
     visits: [visit, ...s.visits],
   }));
   return visit;
+}
+
+export function markParked(visitId: string) {
+  set((s) => ({
+    ...s,
+    visits: s.visits.map((v) =>
+      v.id === visitId && !v.parkedAt ? { ...v, parkedAt: new Date().toISOString() } : v
+    ),
+  }));
+}
+
+export function requestReturn(visitId: string) {
+  set((s) => ({
+    ...s,
+    visits: s.visits.map((v) =>
+      v.id === visitId && !v.checkOutAt
+        ? { ...v, returnRequestedAt: v.returnRequestedAt || new Date().toISOString() }
+        : v
+    ),
+  }));
+}
+
+export function visitStatusLabel(v: Visit): 'داخل الموقف' | 'تم التسليم' | 'بانتظار التسليم' {
+  if (v.checkOutAt) return 'تم التسليم';
+  if (v.returnRequestedAt) return 'بانتظار التسليم';
+  return 'داخل الموقف';
+}
+
+export type TimelineStep = {
+  key: string;
+  label: string;
+  at?: string;
+  by?: string;
+  done: boolean;
+};
+
+export function visitTimeline(v: Visit): TimelineStep[] {
+  const handoff = v.handoffId ? state.handoffs.find((h) => h.id === v.handoffId) : undefined;
+  const steps: TimelineStep[] = [
+    {
+      key: 'request',
+      label: 'طلب التسليم من المالك',
+      at: handoff?.createdAt,
+      done: !!handoff?.createdAt,
+    },
+    {
+      key: 'accepted',
+      label: 'قبول الطلب',
+      at: handoff?.acceptedAt,
+      by: handoff?.assignedEmployeeId ? empName(handoff.assignedEmployeeId) : undefined,
+      done: !!handoff?.acceptedAt,
+    },
+    {
+      key: 'received',
+      label: 'استلام السيارة',
+      at: v.checkInAt,
+      by: empName(v.checkInBy),
+      done: !!v.checkInAt,
+    },
+    {
+      key: 'parked',
+      label: 'رُكنت في الموقف',
+      at: v.parkedAt,
+      by: empName(v.checkInBy),
+      done: !!v.parkedAt,
+    },
+    {
+      key: 'return_req',
+      label: 'طلب الإرجاع من المالك',
+      at: v.returnRequestedAt,
+      done: !!v.returnRequestedAt,
+    },
+    {
+      key: 'handed',
+      label: 'تسليم السيارة للمالك',
+      at: v.checkOutAt,
+      by: v.checkOutBy ? empName(v.checkOutBy) : undefined,
+      done: !!v.checkOutAt,
+    },
+  ];
+  // Walk-in without app request: collapse request/accepted as N/A skipped
+  if (!handoff) {
+    steps[0] = { ...steps[0], label: 'دخول مباشر (بدون طلب تطبيق)', done: true, at: v.checkInAt };
+    steps[1] = { ...steps[1], label: '—', done: false };
+  }
+  return steps;
 }
 
 export function checkOut(visitId: string) {
@@ -308,10 +407,11 @@ export function setAutoAcceptHandoffs(operatorId: string, enabled: boolean) {
   }));
 }
 
-export function createHandoff(siteId: string, plate: string): HandoffRequest {
+export function createHandoff(siteId: string, plate: string, ownerPhone?: string): HandoffRequest {
   const found = siteById(siteId);
   if (!found) throw new Error('site not found');
   const seq = state.handoffSeq + 1;
+  const phone = ownerPhone?.trim() || state.driverAuth?.phone || undefined;
   const handoff: HandoffRequest = {
     id: `h-${seq}`,
     plate: plate.trim(),
@@ -319,6 +419,7 @@ export function createHandoff(siteId: string, plate: string): HandoffRequest {
     operatorId: found.operator.id,
     status: 'pending',
     createdAt: new Date().toISOString(),
+    ownerPhone: phone,
   };
   set((s) => ({
     ...s,
@@ -346,6 +447,7 @@ export function acceptHandoff(handoffId: string, employeeId: string): Visit | nu
   if (!emp || emp.operatorId !== handoff.operatorId) return null;
 
   const seq = state.visitSeq + 1;
+  const now = new Date().toISOString();
   const visit: Visit = {
     id: `v-${seq}`,
     receiptNo: `V-${seq}`,
@@ -353,9 +455,11 @@ export function acceptHandoff(handoffId: string, employeeId: string): Visit | nu
     operatorId: handoff.operatorId,
     siteId: handoff.siteId,
     checkInBy: emp.id,
-    checkInAt: new Date().toISOString(),
+    checkInAt: now,
+    parkedAt: now,
     notes: 'تسليم من السائق عبر التطبيق',
     handoffId: handoff.id,
+    ownerPhone: handoff.ownerPhone,
   };
 
   set((s) => ({

@@ -23,9 +23,9 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
   ],
   operator: [
     { to: '/operator', label: 'اليوم' },
+    { to: '/operator/visits', label: 'سجل السيارات' },
     { to: '/operator/requests', label: 'طلبات السائقين' },
     { to: '/operator/employees', label: 'الموظفون' },
-    { to: '/operator/visits', label: 'الزيارات' },
     { to: '/operator/license', label: 'التسجيل / الترخيص' },
   ],
   gov: [

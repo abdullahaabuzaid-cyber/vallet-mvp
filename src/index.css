@@ -1006,3 +1006,169 @@ a { color: inherit; text-decoration: none; }
 .smart-alert.sev-high { background: var(--danger-soft); border-color: #f5c2c0; }
 .smart-alert.sev-medium { background: var(--warning-soft); border-color: #efd7a0; }
 .smart-alert.sev-low { background: var(--primary-soft); border-color: #c5d8ff; }
+
+/* —— Operator car log —— */
+.car-log-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.car-log-stats {
+  display: flex;
+  gap: 14px;
+}
+.car-log-stats > div {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  min-width: 88px;
+  text-align: center;
+}
+.car-log-stats strong { display: block; font-size: 1.35rem; }
+.car-log-stats span { color: var(--text-3); font-size: 0.78rem; font-weight: 700; }
+.car-log-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.car-log-table-wrap { overflow-x: auto; }
+.car-log-row { cursor: pointer; }
+.car-log-row:hover td { background: var(--primary-soft) !important; }
+.plate-cell { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.car-thumb {
+  width: 48px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  background: var(--surface-2);
+}
+.car-thumb-empty {
+  display: grid;
+  place-content: center;
+  color: var(--text-3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px dashed var(--border);
+}
+.car-thumb-lg {
+  width: 100%;
+  max-width: 220px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.car-log-cards { display: none; gap: 10px; }
+.car-card {
+  display: block;
+  width: 100%;
+  text-align: start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.car-card-top { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+.car-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+.tiny { font-size: 0.75rem; }
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 80;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+.drawer {
+  width: min(420px, 100%);
+  background: var(--surface);
+  box-shadow: -8px 0 40px rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow: auto;
+  padding: 16px;
+  animation: drawer-in .2s ease-out;
+}
+@keyframes drawer-in {
+  from { transform: translateX(-12px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.drawer-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  padding-bottom: 8px;
+  z-index: 1;
+}
+.drawer-car {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 16px;
+}
+.drawer-staff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 8px;
+  border-inline-start: 2px solid var(--border);
+}
+.timeline li {
+  position: relative;
+  padding: 0 0 16px 16px;
+}
+.timeline-dot {
+  position: absolute;
+  inset-inline-start: -7px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  border: 2px solid var(--surface);
+}
+.timeline li.done .timeline-dot { background: var(--primary, #2563eb); }
+.timeline li.pending { opacity: 0.55; }
+@media (max-width: 860px) {
+  .car-log-table { display: none; }
+  .car-log-cards { display: grid; }
+  .drawer-car { grid-template-columns: 1fr; }
+  .drawer-backdrop { justify-content: stretch; }
+  .drawer { width: 100%; border-radius: 18px 18px 0 0; margin-top: auto; max-height: 88vh; }
+}

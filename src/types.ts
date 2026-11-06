@@ -65,6 +65,31 @@ export interface Visit {
   checkOutAt?: string;
   notes?: string;
   handoffId?: string;
+  /** Optional vehicle details captured at staff entry */
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  ownerPhone?: string;
+  /** Compressed capture thumbnail (data URL) */
+  photoThumb?: string;
+  /** When car was marked parked after receive */
+  parkedAt?: string;
+  /** Owner asked for return via app (or staff) */
+  returnRequestedAt?: string;
+}
+
+export type VisitStatusFilter = 'all' | 'inside' | 'delivered' | 'return_pending';
+
+export interface VisitExtras {
+  notes?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  ownerPhone?: string;
+  photoThumb?: string;
+  parkedAt?: string;
+  returnRequestedAt?: string;
+  handoffId?: string;
 }
 
 export interface HandoffRequest {
@@ -77,6 +102,7 @@ export interface HandoffRequest {
   acceptedAt?: string;
   assignedEmployeeId?: string;
   visitId?: string;
+  ownerPhone?: string;
 }
 
 export interface Incident {
