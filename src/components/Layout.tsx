@@ -15,6 +15,7 @@ const PORTAL_ROLES: Role[] = ['gov', 'operator', 'staff'];
 const NAV: Record<Role, { to: string; label: string }[]> = {
   staff: [
     { to: '/staff', label: 'الرئيسية' },
+    { to: '/staff/scan', label: 'صوّر النمرة' },
     { to: '/staff/checkin', label: 'دخول' },
     { to: '/staff/checkout', label: 'خروج' },
     { to: '/staff/cars', label: 'الحالية' },
@@ -29,6 +30,7 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
   ],
   gov: [
     { to: '/gov', label: 'الملخص' },
+    { to: '/gov/alerts', label: 'تنبيهات ذكية' },
     { to: '/gov/map', label: 'الخريطة' },
     { to: '/gov/licenses', label: 'مراجعة التسجيل' },
     { to: '/gov/operators', label: 'المشغّلون' },

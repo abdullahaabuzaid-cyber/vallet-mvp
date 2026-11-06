@@ -26,8 +26,8 @@ class ErrorBoundary extends Component<
               type="button"
               onClick={() => {
                 try {
+                  localStorage.removeItem('vallet-mvp-v7');
                   localStorage.removeItem('vallet-mvp-v6');
-                  localStorage.removeItem('vallet-mvp-v5');
                 } catch {
                   /* ignore */
                 }

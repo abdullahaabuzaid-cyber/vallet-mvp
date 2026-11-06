@@ -21,6 +21,8 @@ export interface Site {
   area: string;
   lat: number;
   lng: number;
+  /** Max concurrent parked cars */
+  capacity: number;
 }
 
 export interface Operator {
@@ -34,6 +36,8 @@ export interface Operator {
   rejectReason?: string;
   submittedAt: string;
   area: string;
+  /** Auto-accept driver handoffs when site has free capacity */
+  autoAcceptHandoffs: boolean;
 }
 
 export interface Employee {

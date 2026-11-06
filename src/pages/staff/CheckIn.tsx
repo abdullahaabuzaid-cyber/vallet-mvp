@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { checkIn, empName, useStore } from '../../store/useStore';
+import { PlateScanner } from '../../components/PlateScanner';
+import { checkIn, empName, formatDateTime, useStore } from '../../store/useStore';
 import type { Visit } from '../../types';
 
 export default function CheckIn() {
@@ -8,6 +9,7 @@ export default function CheckIn() {
   const [plate, setPlate] = useState('');
   const [notes, setNotes] = useState('');
   const [visit, setVisit] = useState<Visit | null>(null);
+  const [showCam, setShowCam] = useState(true);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +29,7 @@ export default function CheckIn() {
             <div>
               اللوحة: <strong>{visit.plate}</strong>
             </div>
+            <div className="muted">وقت الدخول: {formatDateTime(visit.checkInAt)}</div>
             <div className="muted">الموظف: {empName(visit.checkInBy)}</div>
             {visit.notes && <div className="muted">ملاحظات: {visit.notes}</div>}
           </div>
@@ -34,8 +37,8 @@ export default function CheckIn() {
             <button className="btn btn-primary" type="button" onClick={() => setVisit(null)}>
               دخول سيارة أخرى
             </button>
-            <Link to="/staff" className="btn">
-              الرئيسية
+            <Link to="/staff/scan" className="btn">
+              صوّر النمرة
             </Link>
           </div>
         </div>
@@ -47,31 +50,29 @@ export default function CheckIn() {
     <div className="phone-shell">
       <div className="card">
         <h2>تسجيل دخول سيارة</h2>
-        <div
-          style={{
-            height: 70,
-            border: '1px dashed var(--border-strong)',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-3)',
-            marginBottom: 12,
-            fontSize: 13,
-          }}
-        >
-          تصوير اللوحة (تجريبي — أدخل يدوياً)
+        <div className="row" style={{ marginBottom: 10 }}>
+          <button type="button" className={`btn btn-sm ${showCam ? 'btn-primary' : ''}`} onClick={() => setShowCam(true)}>
+            صوّر النمرة
+          </button>
+          <button type="button" className={`btn btn-sm ${!showCam ? 'btn-primary' : ''}`} onClick={() => setShowCam(false)}>
+            يدوي فقط
+          </button>
+          <Link to="/staff/scan" className="btn btn-sm">
+            شاشة المسح الكاملة
+          </Link>
         </div>
-        <form onSubmit={submit} className="stack">
+        {showCam && (
+          <PlateScanner
+            onPlate={(p, meta) => {
+              setPlate(p);
+              if (meta.source === 'ocr') setNotes('دخول عبر OCR');
+            }}
+          />
+        )}
+        <form onSubmit={submit} className="stack" style={{ marginTop: 12 }}>
           <div className="field">
             <label>رقم اللوحة</label>
-            <input
-              value={plate}
-              onChange={(e) => setPlate(e.target.value)}
-              placeholder="12-34567"
-              required
-              autoFocus
-            />
+            <input value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="12-34567" required />
           </div>
           <div className="field">
             <label>الموظف</label>
@@ -79,14 +80,10 @@ export default function CheckIn() {
           </div>
           <div className="field">
             <label>ملاحظات الحالة</label>
-            <input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="خدش باب أمامي (اختياري)"
-            />
+            <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="خدش باب أمامي (اختياري)" />
           </div>
           <button className="btn btn-primary btn-big" type="submit">
-            تأكيد وإصدار إيصال
+            تأكيد وإصدار إيصال · يختم الوقت الآن
           </button>
         </form>
       </div>

@@ -7,6 +7,7 @@ import CheckIn from './pages/staff/CheckIn';
 import CheckOut from './pages/staff/CheckOut';
 import Cars from './pages/staff/Cars';
 import IncidentForm from './pages/staff/Incident';
+import StaffScan from './pages/staff/Scan';
 import OperatorDashboard from './pages/operator/Dashboard';
 import OperatorRequests from './pages/operator/Requests';
 import Employees from './pages/operator/Employees';
@@ -18,6 +19,7 @@ import Operators from './pages/gov/Operators';
 import GovVisits from './pages/gov/Visits';
 import GovIncidents from './pages/gov/Incidents';
 import GovMap from './pages/gov/Map';
+import GovAlerts from './pages/gov/Alerts';
 import DriverHome from './pages/driver/Home';
 import DriverStatus from './pages/driver/Status';
 import DriverAuth from './pages/driver/Auth';
@@ -51,6 +53,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/driver" replace />} />
         <Route path="/staff" element={<StaffHome />} />
+        <Route path="/staff/scan" element={<StaffScan />} />
         <Route path="/staff/checkin" element={<CheckIn />} />
         <Route path="/staff/checkout" element={<CheckOut />} />
         <Route path="/staff/cars" element={<Cars />} />
@@ -65,6 +68,7 @@ export default function App() {
         <Route path="/gov/operators" element={<Operators />} />
         <Route path="/gov/visits" element={<GovVisits />} />
         <Route path="/gov/incidents" element={<GovIncidents />} />
+        <Route path="/gov/alerts" element={<GovAlerts />} />
         <Route path="/gov/map" element={<GovMap />} />
         <Route path="/driver" element={<DriverHome />} />
         <Route path="/driver/status" element={<DriverStatus />} />

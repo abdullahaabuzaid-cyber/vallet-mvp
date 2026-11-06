@@ -18,8 +18,8 @@ import { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS } from '../types';
 export { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS };
 
 /** Bump when seed shape changes; old keys are cleared safely */
-const KEY = 'vallet-mvp-v6';
-const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4', 'vallet-mvp-v5'];
+const KEY = 'vallet-mvp-v7';
+const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4', 'vallet-mvp-v5', 'vallet-mvp-v6'];
 
 function isFiniteCoord(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n);
@@ -34,7 +34,13 @@ function sanitizeSite(site: Partial<Site> | undefined, fallback?: Site): Site | 
   const lat = isFiniteCoord(site?.lat) ? site!.lat : fallback?.lat;
   const lng = isFiniteCoord(site?.lng) ? site!.lng : fallback?.lng;
   if (!isFiniteCoord(lat) || !isFiniteCoord(lng)) return null;
-  return { id, name, area, lat, lng };
+  const capacity =
+    typeof site?.capacity === 'number' && site.capacity > 0
+      ? site.capacity
+      : typeof fallback?.capacity === 'number' && fallback.capacity > 0
+        ? fallback.capacity
+        : 10;
+  return { id, name, area, lat, lng, capacity };
 }
 
 function migrate(parsed: Partial<AppState>): AppState {
@@ -62,6 +68,7 @@ function migrate(parsed: Partial<AppState>): AppState {
             name: op.name || seedOp?.name || 'مشغّل',
             area: op.area || seedOp?.area || 'عمّان',
             submittedAt: op.submittedAt || seedOp?.submittedAt || new Date().toISOString(),
+            autoAcceptHandoffs: op.autoAcceptHandoffs ?? seedOp?.autoAcceptHandoffs ?? false,
           };
         })
       : base.operators;
@@ -283,6 +290,24 @@ export function checkOut(visitId: string) {
   }));
 }
 
+export function siteOccupancy(siteId: string) {
+  return state.visits.filter((v) => v.siteId === siteId && !v.checkOutAt).length;
+}
+
+export function siteHasCapacity(siteId: string) {
+  const found = siteById(siteId);
+  if (!found) return false;
+  const cap = found.site.capacity || 10;
+  return siteOccupancy(siteId) < cap;
+}
+
+export function setAutoAcceptHandoffs(operatorId: string, enabled: boolean) {
+  set((s) => ({
+    ...s,
+    operators: s.operators.map((o) => (o.id === operatorId ? { ...o, autoAcceptHandoffs: enabled } : o)),
+  }));
+}
+
 export function createHandoff(siteId: string, plate: string): HandoffRequest {
   const found = siteById(siteId);
   if (!found) throw new Error('site not found');
@@ -300,6 +325,17 @@ export function createHandoff(siteId: string, plate: string): HandoffRequest {
     handoffSeq: seq,
     handoffs: [handoff, ...s.handoffs],
   }));
+
+  // Auto-accept when operator enabled it and lot has free capacity
+  if (found.operator.autoAcceptHandoffs && siteHasCapacity(siteId)) {
+    const emp =
+      state.employees.find((e) => e.operatorId === found.operator.id && e.active && e.siteId === siteId) ||
+      state.employees.find((e) => e.operatorId === found.operator.id && e.active && e.reviewStatus === 'approved');
+    if (emp) {
+      acceptHandoff(handoff.id, emp.id);
+      return getState().handoffs.find((h) => h.id === handoff.id) || handoff;
+    }
+  }
   return handoff;
 }
 
@@ -610,6 +646,85 @@ export function durationLabel(from: string, to?: string) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m ? `${h}س${m}د` : `${h}س`;
+}
+
+export function findActiveVisitByPlate(plate: string, operatorId?: string) {
+  const p = plate.trim().toLowerCase();
+  return state.visits.find(
+    (v) =>
+      !v.checkOutAt &&
+      v.plate.toLowerCase() === p &&
+      (!operatorId || v.operatorId === operatorId)
+  );
+}
+
+export type SmartAlert = {
+  id: string;
+  severity: 'high' | 'medium' | 'low';
+  title: string;
+  detail: string;
+  kind: 'overstay' | 'exit_no_request' | 'unlicensed_cluster';
+};
+
+export function computeSmartAlerts(): SmartAlert[] {
+  const alerts: SmartAlert[] = [];
+  const now = Date.now();
+  const OVERSTAY_MS = 4 * 3600_000;
+
+  for (const v of state.visits) {
+    if (!v.checkOutAt) {
+      const age = now - new Date(v.checkInAt).getTime();
+      if (age >= OVERSTAY_MS) {
+        const hours = Math.round(age / 3600_000);
+        alerts.push({
+          id: `overstay-${v.id}`,
+          severity: hours >= 8 ? 'high' : 'medium',
+          title: 'تجاوز مدة الوقوف',
+          detail: `اللوحة ${v.plate} (${v.receiptNo}) منذ ${hours} ساعة بدون خروج`,
+          kind: 'overstay',
+        });
+      }
+    } else if (!v.handoffId) {
+      // exited without a driver-app handoff (owner request path)
+      const outAge = now - new Date(v.checkOutAt).getTime();
+      if (outAge < 48 * 3600_000) {
+        alerts.push({
+          id: `exit-${v.id}`,
+          severity: 'medium',
+          title: 'خروج بدون طلب مالك عبر التطبيق',
+          detail: `اللوحة ${v.plate} خرجت عبر الموظف دون طلب تسليم مرتبط من السائق`,
+          kind: 'exit_no_request',
+        });
+      }
+    }
+  }
+
+  const unlicensed = state.incidents.filter((i) => i.type === 'unlicensed' && i.lat != null && i.lng != null);
+  const clusters: { key: string; items: typeof unlicensed }[] = [];
+  for (const inc of unlicensed) {
+    const key = `${(inc.lat as number).toFixed(2)},${(inc.lng as number).toFixed(2)}`;
+    let c = clusters.find((x) => x.key === key);
+    if (!c) {
+      c = { key, items: [] };
+      clusters.push(c);
+    }
+    c.items.push(inc);
+  }
+  for (const c of clusters) {
+    if (c.items.length >= 2) {
+      const area = c.items[0].area || 'عمّان';
+      alerts.push({
+        id: `cluster-${c.key}`,
+        severity: 'high',
+        title: 'تجمّع بلاغات فاليه غير مرخّص',
+        detail: `${c.items.length} بلاغات قريبة في ${area}`,
+        kind: 'unlicensed_cluster',
+      });
+    }
+  }
+
+  const order = { high: 0, medium: 1, low: 2 };
+  return alerts.sort((a, b) => order[a.severity] - order[b.severity]);
 }
 
 export const INCIDENT_LABELS: Record<IncidentType, string> = {

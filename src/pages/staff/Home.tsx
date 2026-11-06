@@ -14,7 +14,10 @@ export default function StaffHome() {
         <div className="muted">مرحباً، {empName(emp.id)}</div>
         <h2 style={{ marginTop: 4 }}>موقع: {emp.siteId ? siteName(emp.siteId) : '—'}</h2>
         <div className="big-actions" style={{ marginTop: 16 }}>
-          <Link to="/staff/checkin" className="btn btn-primary btn-big">
+          <Link to="/staff/scan" className="btn btn-primary btn-big">
+            صوّر النمرة (OCR)
+          </Link>
+          <Link to="/staff/checkin" className="btn btn-big">
             دخول سيارة
           </Link>
           <Link to="/staff/checkout" className="btn btn-big">
