@@ -5,7 +5,7 @@ const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
 const minsAgo = (m: number) => new Date(now - m * 60_000).toISOString();
 
 export const SEED: AppState = {
-  role: 'staff',
+  role: 'driver',
   currentEmployeeId: 'emp-1',
   currentOperatorId: 'op-1',
   visitSeq: 240880,

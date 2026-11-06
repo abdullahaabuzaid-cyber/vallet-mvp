@@ -14,8 +14,8 @@ import type {
 } from '../types';
 
 /** Bump when seed shape changes; old keys are cleared safely */
-const KEY = 'vallet-mvp-v4';
-const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3'];
+const KEY = 'vallet-mvp-v5';
+const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4'];
 
 function isFiniteCoord(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n);

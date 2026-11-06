@@ -48,7 +48,7 @@ export default function App() {
     <Layout>
       <RoleRedirect />
       <Routes>
-        <Route path="/" element={<Navigate to="/staff" replace />} />
+        <Route path="/" element={<Navigate to="/driver" replace />} />
         <Route path="/staff" element={<StaffHome />} />
         <Route path="/staff/checkin" element={<CheckIn />} />
         <Route path="/staff/checkout" element={<CheckOut />} />
@@ -67,7 +67,7 @@ export default function App() {
         <Route path="/gov/map" element={<GovMap />} />
         <Route path="/driver" element={<DriverHome />} />
         <Route path="/driver/status" element={<DriverStatus />} />
-        <Route path="*" element={<Navigate to="/staff" replace />} />
+        <Route path="*" element={<Navigate to="/driver" replace />} />
       </Routes>
     </Layout>
   );

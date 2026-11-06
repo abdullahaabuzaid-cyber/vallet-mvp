@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { resetDemo, setRole, useStore } from '../store/useStore';
 import type { Role } from '../types';
@@ -6,10 +7,10 @@ const ROLE_LABELS: Record<Role, string> = {
   gov: 'حكومة',
   operator: 'مشغّل',
   staff: 'موظف',
-  driver: 'سائق',
+  driver: 'سائق / صاحب سيارة',
 };
 
-const ROLE_ORDER: Role[] = ['gov', 'operator', 'staff', 'driver'];
+const PORTAL_ROLES: Role[] = ['gov', 'operator', 'staff'];
 
 const NAV: Record<Role, { to: string; label: string }[]> = {
   staff: [
@@ -46,70 +47,139 @@ export function Layout({ children }: { children: React.ReactNode }) {
     (s) => s.handoffs.filter((h) => h.operatorId === s.currentOperatorId && h.status === 'pending').length
   );
   const loc = useLocation();
+  const isDriver = role === 'driver';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark" aria-hidden>
-            <span className="brand-mark-letter">ف</span>
+    <div className={`app-shell ${isDriver ? 'shell-driver' : 'shell-portal'}`}>
+      {isDriver ? (
+        <header className="driver-topbar">
+          <div className="brand">
+            <div className="brand-mark" aria-hidden>
+              <span className="brand-mark-letter">ف</span>
+            </div>
+            <div className="brand-text">
+              <span className="brand-name">فاليت</span>
+              <small>مواقف مرخّصة · عمّان</small>
+            </div>
           </div>
-          <div className="brand-text">
-            <span className="brand-name">فاليت</span>
-            <small>هيئة تنظيم الفاليه — عمّان</small>
-          </div>
-        </div>
-        <div className="role-switch" role="tablist" aria-label="تبديل الدور">
-          {ROLE_ORDER.map((r) => (
+          <div className="driver-top-actions" ref={menuRef}>
+            <Link to="/driver/status" className="icon-chip" title="طلباتي">
+              📋
+            </Link>
             <button
-              key={r}
-              className={role === r ? 'active' : ''}
-              onClick={() => setRole(r)}
               type="button"
-              role="tab"
-              aria-selected={role === r}
+              className="portal-menu-btn"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              onClick={() => setMenuOpen((v) => !v)}
             >
-              {ROLE_LABELS[r]}
+              دخول الجهات
             </button>
-          ))}
-        </div>
-      </header>
+            {menuOpen && (
+              <div className="portal-menu" role="menu">
+                <div className="portal-menu-title">بوابات التشغيل</div>
+                {PORTAL_ROLES.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setRole(r);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    {ROLE_LABELS[r]}
+                  </button>
+                ))}
+                <button type="button" className="portal-menu-reset" onClick={() => { resetDemo(); setMenuOpen(false); }}>
+                  إعادة البيانات التجريبية
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+      ) : (
+        <header className="topbar">
+          <div className="brand">
+            <div className="brand-mark" aria-hidden>
+              <span className="brand-mark-letter">ف</span>
+            </div>
+            <div className="brand-text">
+              <span className="brand-name">فاليت</span>
+              <small>هيئة تنظيم الفاليه — عمّان</small>
+            </div>
+          </div>
+          <div className="portal-header-actions">
+            <button type="button" className="btn btn-sm portal-back" onClick={() => setRole('driver')}>
+              ← تطبيق السائق
+            </button>
+            <div className="role-switch" role="tablist" aria-label="تبديل الدور">
+              {(['gov', 'operator', 'staff'] as Role[]).map((r) => (
+                <button
+                  key={r}
+                  className={role === r ? 'active' : ''}
+                  onClick={() => setRole(r)}
+                  type="button"
+                  role="tab"
+                  aria-selected={role === r}
+                >
+                  {ROLE_LABELS[r].split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
+      )}
 
-      <main className="main">
-        <div className="demo-banner">
-          <span>
-            وضع تجريبي — البيانات محفوظة محلياً على جهازك. بدّل الدور من الشريط أعلاه.
-          </span>
-          <button className="btn btn-sm" type="button" onClick={resetDemo}>
-            إعادة البيانات
-          </button>
-        </div>
+      <main className={`main ${isDriver ? 'main-driver' : ''}`}>
+        {!isDriver && (
+          <div className="demo-banner">
+            <span>وضع تجريبي للجهات — البيانات محفوظة محلياً على جهازك.</span>
+            <button className="btn btn-sm" type="button" onClick={resetDemo}>
+              إعادة البيانات
+            </button>
+          </div>
+        )}
 
-        <nav className="nav-tabs" aria-label="أقسام الدور">
-          {NAV[role].map((item) => {
-            const isRequests = item.to === '/operator/requests';
-            const label =
-              isRequests && pendingCount > 0
-                ? `${item.label} (${pendingCount})`
-                : item.label;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={loc.pathname === item.to ? 'active' : ''}
-              >
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+        {!isDriver && (
+          <nav className="nav-tabs" aria-label="أقسام الدور">
+            {NAV[role].map((item) => {
+              const isRequests = item.to === '/operator/requests';
+              const label =
+                isRequests && pendingCount > 0
+                  ? `${item.label} (${pendingCount})`
+                  : item.label;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={loc.pathname === item.to ? 'active' : ''}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         {children}
       </main>
 
-      <footer className="app-footer">
-        <span>فاليت · منصة حكومية لتنظيم الفاليه في عمّان</span>
-      </footer>
+      {!isDriver && (
+        <footer className="app-footer">
+          <span>فاليت · منصة حكومية لتنظيم الفاليه في عمّان</span>
+        </footer>
+      )}
     </div>
   );
 }
