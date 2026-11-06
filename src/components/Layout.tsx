@@ -28,6 +28,7 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
   ],
   gov: [
     { to: '/gov', label: 'الملخص' },
+    { to: '/gov/map', label: 'الخريطة' },
     { to: '/gov/licenses', label: 'الطلبات' },
     { to: '/gov/operators', label: 'المشغّلون' },
     { to: '/gov/visits', label: 'تدقيق' },

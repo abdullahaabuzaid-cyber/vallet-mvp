@@ -12,7 +12,7 @@ import type {
   Visit,
 } from '../types';
 
-const KEY = 'vallet-mvp-v2';
+const KEY = 'vallet-mvp-v3';
 
 function load(): AppState {
   try {
@@ -402,3 +402,50 @@ export const HANDOFF_STATUS_LABELS = {
   rejected: 'مرفوض',
   cancelled: 'ملغى',
 } as const;
+
+/** All operator sites for gov / map views, optionally with distance from origin */
+export function allLotsForMap(origin?: { lat: number; lng: number }) {
+  const lots: {
+    siteId: string;
+    siteName: string;
+    area: string;
+    operatorId: string;
+    operatorName: string;
+    licenseNo?: string;
+    status: LicenseStatus;
+    lat: number;
+    lng: number;
+    distanceKm?: number;
+  }[] = [];
+  for (const op of state.operators) {
+    for (const site of op.sites) {
+      lots.push({
+        siteId: site.id,
+        siteName: site.name,
+        area: site.area,
+        operatorId: op.id,
+        operatorName: op.name,
+        licenseNo: op.licenseNo,
+        status: op.status,
+        lat: site.lat,
+        lng: site.lng,
+        distanceKm: origin ? distanceKm(origin, site) : undefined,
+      });
+    }
+  }
+  if (origin) lots.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+  return lots;
+}
+
+export function unlicensedPins() {
+  return state.incidents
+    .filter((i) => i.type === 'unlicensed' && i.lat != null && i.lng != null)
+    .map((i) => ({
+      id: i.id,
+      area: i.area ?? 'عمّان',
+      description: i.description,
+      lat: i.lat as number,
+      lng: i.lng as number,
+      statusLabel: INCIDENT_STATUS_LABELS[i.status],
+    }));
+}

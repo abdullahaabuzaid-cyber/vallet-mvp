@@ -17,6 +17,7 @@ import Licenses from './pages/gov/Licenses';
 import Operators from './pages/gov/Operators';
 import GovVisits from './pages/gov/Visits';
 import GovIncidents from './pages/gov/Incidents';
+import GovMap from './pages/gov/Map';
 import DriverHome from './pages/driver/Home';
 import DriverStatus from './pages/driver/Status';
 
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/gov/operators" element={<Operators />} />
         <Route path="/gov/visits" element={<GovVisits />} />
         <Route path="/gov/incidents" element={<GovIncidents />} />
+        <Route path="/gov/map" element={<GovMap />} />
         <Route path="/driver" element={<DriverHome />} />
         <Route path="/driver/status" element={<DriverStatus />} />
         <Route path="*" element={<Navigate to="/staff" replace />} />

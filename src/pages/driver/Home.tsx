@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DEMO_AMMAN_PIN } from '../../data/seed';
 import { Badge } from '../../components/Layout';
+import { LotsMap } from '../../components/LotsMap';
 import {
   createHandoff,
   formatDateTime,
@@ -15,12 +16,15 @@ type GeoState =
   | { status: 'ok'; lat: number; lng: number; source: 'gps' | 'demo' }
   | { status: 'error'; lat: number; lng: number; source: 'demo'; reason: string };
 
+type ViewMode = 'list' | 'map';
+
 export default function DriverHome() {
   const handoffs = useStore((s) => s.handoffs);
   const [geo, setGeo] = useState<GeoState>({ status: 'loading' });
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [plate, setPlate] = useState('');
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const [view, setView] = useState<ViewMode>('list');
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -60,6 +64,15 @@ export default function DriverHome() {
     return licensedLotsNear({ lat: geo.lat, lng: geo.lng });
   }, [geo]);
 
+  const mapLots = useMemo(
+    () =>
+      lots.map((l) => ({
+        ...l,
+        status: 'approved' as const,
+      })),
+    [lots]
+  );
+
   const pending = handoffs.find((h) => h.status === 'pending');
   const watching = submittedId
     ? handoffs.find((h) => h.id === submittedId)
@@ -76,6 +89,12 @@ export default function DriverHome() {
 
   function startNew() {
     setSubmittedId('__new__');
+  }
+
+  function selectFromMap(siteId: string) {
+    setSelectedSiteId(siteId);
+    setView('list');
+    // Keep map optional — switch to list so the handoff form is visible on mobile
   }
 
   if (watching && submittedId !== '__new__') {
@@ -98,34 +117,68 @@ export default function DriverHome() {
             {geo.status === 'error' && <span className="muted">{geo.reason}</span>}
           </div>
         )}
-      </div>
-
-      <div className="card">
-        <h3>أقرب المواقف المرخّصة</h3>
-        {geo.status === 'loading' && <div className="empty">…</div>}
-        {geo.status !== 'loading' && !lots.length && (
-          <div className="empty">لا مواقف مرخّصة قريبة حالياً</div>
-        )}
-        <div className="stack">
-          {lots.map((lot) => (
-            <button
-              key={lot.siteId}
-              type="button"
-              className={`lot-card ${selectedSiteId === lot.siteId ? 'selected' : ''}`}
-              onClick={() => setSelectedSiteId(lot.siteId)}
-            >
-              <div className="row" style={{ justifyContent: 'space-between' }}>
-                <strong>{lot.siteName}</strong>
-                <Badge tone="info">{lot.distanceKm < 1
-                  ? `${Math.round(lot.distanceKm * 1000)} م`
-                  : `${lot.distanceKm.toFixed(1)} كم`}</Badge>
-              </div>
-              <div className="muted">{lot.area} · {lot.operatorName}</div>
-              {lot.licenseNo && <div className="muted">ترخيص: {lot.licenseNo}</div>}
-            </button>
-          ))}
+        <div className="view-toggle" role="tablist" aria-label="عرض المواقف">
+          <button
+            type="button"
+            className={view === 'list' ? 'active' : ''}
+            onClick={() => setView('list')}
+          >
+            قائمة
+          </button>
+          <button
+            type="button"
+            className={view === 'map' ? 'active' : ''}
+            onClick={() => setView('map')}
+          >
+            خريطة المواقف المعتمدة
+          </button>
         </div>
       </div>
+
+      {view === 'map' && geo.status !== 'loading' && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <LotsMap
+            mode="driver"
+            lots={mapLots}
+            user={{ lat: geo.lat, lng: geo.lng }}
+            selectedSiteId={selectedSiteId}
+            onRequestHandoff={selectFromMap}
+          />
+        </div>
+      )}
+
+      {view === 'list' && (
+        <div className="card">
+          <h3>أقرب المواقف المرخّصة</h3>
+          {geo.status === 'loading' && <div className="empty">…</div>}
+          {geo.status !== 'loading' && !lots.length && (
+            <div className="empty">لا مواقف مرخّصة قريبة حالياً</div>
+          )}
+          <div className="stack">
+            {lots.map((lot) => (
+              <button
+                key={lot.siteId}
+                type="button"
+                className={`lot-card ${selectedSiteId === lot.siteId ? 'selected' : ''}`}
+                onClick={() => setSelectedSiteId(lot.siteId)}
+              >
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <strong>{lot.siteName}</strong>
+                  <Badge tone="info">
+                    {lot.distanceKm < 1
+                      ? `${Math.round(lot.distanceKm * 1000)} م`
+                      : `${lot.distanceKm.toFixed(1)} كم`}
+                  </Badge>
+                </div>
+                <div className="muted">
+                  {lot.area} · {lot.operatorName}
+                </div>
+                {lot.licenseNo && <div className="muted">ترخيص: {lot.licenseNo}</div>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {selectedSiteId && (
         <div className="card">
@@ -207,11 +260,20 @@ function HandoffStatusCard({ handoffId, onNew }: { handoffId: string; onNew: () 
         {handoff.status === 'accepted' && (
           <div className="stack" style={{ marginTop: 14 }}>
             <div className="card" style={{ margin: 0, background: 'var(--success-soft)' }}>
-              <div><strong>الشركة:</strong> {op?.name}</div>
-              <div><strong>استلم السيارة:</strong> {staff?.name ?? '—'}</div>
-              <div><strong>وقت الاستلام:</strong> {handoff.acceptedAt ? formatDateTime(handoff.acceptedAt) : '—'}</div>
+              <div>
+                <strong>الشركة:</strong> {op?.name}
+              </div>
+              <div>
+                <strong>استلم السيارة:</strong> {staff?.name ?? '—'}
+              </div>
+              <div>
+                <strong>وقت الاستلام:</strong>{' '}
+                {handoff.acceptedAt ? formatDateTime(handoff.acceptedAt) : '—'}
+              </div>
               {visit && (
-                <div><strong>إيصال الزيارة:</strong> {visit.receiptNo}</div>
+                <div>
+                  <strong>إيصال الزيارة:</strong> {visit.receiptNo}
+                </div>
               )}
               {visit?.checkOutAt ? (
                 <div style={{ marginTop: 8 }}>
@@ -234,7 +296,7 @@ function HandoffStatusCard({ handoffId, onNew }: { handoffId: string; onNew: () 
         )}
 
         <div className="row" style={{ marginTop: 14 }}>
-          {(handoff.status !== 'pending') && (
+          {handoff.status !== 'pending' && (
             <button className="btn btn-primary" type="button" onClick={onNew}>
               طلب جديد
             </button>

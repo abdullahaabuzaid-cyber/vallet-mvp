@@ -79,6 +79,10 @@ export interface Incident {
   createdAt: string;
   createdBy: string;
   plate?: string;
+  /** Optional map pin for unlicensed / field reports */
+  lat?: number;
+  lng?: number;
+  area?: string;
 }
 
 export interface AppState {
