@@ -20,6 +20,7 @@ import GovIncidents from './pages/gov/Incidents';
 import GovMap from './pages/gov/Map';
 import DriverHome from './pages/driver/Home';
 import DriverStatus from './pages/driver/Status';
+import DriverAuth from './pages/driver/Auth';
 
 function rolePrefix(role: string) {
   if (role === 'gov') return '/gov';
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/gov/map" element={<GovMap />} />
         <Route path="/driver" element={<DriverHome />} />
         <Route path="/driver/status" element={<DriverStatus />} />
+        <Route path="/driver/auth" element={<DriverAuth />} />
         <Route path="*" element={<Navigate to="/driver" replace />} />
       </Routes>
     </Layout>

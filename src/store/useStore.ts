@@ -2,20 +2,24 @@ import { useRef, useCallback, useSyncExternalStore } from 'react';
 import { SEED } from '../data/seed';
 import type {
   AppState,
+  Document,
   Employee,
   HandoffRequest,
   Incident,
   IncidentStatus,
   IncidentType,
   LicenseStatus,
+  ReviewStatus,
   Role,
   Site,
   Visit,
 } from '../types';
+import { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS } from '../types';
+export { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS };
 
 /** Bump when seed shape changes; old keys are cleared safely */
-const KEY = 'vallet-mvp-v5';
-const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4'];
+const KEY = 'vallet-mvp-v6';
+const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4', 'vallet-mvp-v5'];
 
 function isFiniteCoord(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n);
@@ -70,12 +74,24 @@ function migrate(parsed: Partial<AppState>): AppState {
       ? parsed.role
       : base.role;
 
+  const employees = (Array.isArray(parsed.employees) ? parsed.employees : base.employees).map((e) => {
+    const docs =
+      Array.isArray(e.docs) && e.docs.length
+        ? e.docs
+        : STAFF_DOC_DEFS.map((d) => ({ id: d.id, name: d.name, status: 'missing' as const }));
+    return {
+      ...e,
+      docs,
+      reviewStatus: (e.reviewStatus as ReviewStatus) || 'approved',
+    };
+  });
+
   return {
     ...base,
     ...parsed,
     role,
     operators,
-    employees: Array.isArray(parsed.employees) ? parsed.employees : base.employees,
+    employees,
     visits: Array.isArray(parsed.visits) ? parsed.visits : base.visits,
     incidents: Array.isArray(parsed.incidents) ? parsed.incidents : base.incidents,
     handoffs: Array.isArray(parsed.handoffs) ? parsed.handoffs : [],
@@ -84,6 +100,7 @@ function migrate(parsed: Partial<AppState>): AppState {
     handoffSeq: typeof parsed.handoffSeq === 'number' ? parsed.handoffSeq : base.handoffSeq,
     currentEmployeeId: parsed.currentEmployeeId || base.currentEmployeeId,
     currentOperatorId: parsed.currentOperatorId || base.currentOperatorId,
+    driverAuth: parsed.driverAuth ?? base.driverAuth ?? null,
   };
 }
 
@@ -392,7 +409,7 @@ export function approveLicense(operatorId: string) {
             licenseNo: o.licenseNo || `LIC-AMM-${year}-${String(Math.floor(Math.random() * 900) + 100)}`,
             licenseExpiry: `${year + 1}-12-31`,
             rejectReason: undefined,
-            docs: o.docs.map((d) => ({ ...d, status: 'accepted' as const })),
+            docs: o.docs.map((d) => ({ ...d, status: 'accepted' as const, note: undefined })),
           }
         : o
     ),
@@ -417,7 +434,22 @@ export function setOperatorStatus(operatorId: string, status: LicenseStatus) {
   }));
 }
 
-export function addEmployee(input: { name: string; nationalId: string; phone: string; siteId?: string }) {
+export function emptyStaffDocs(): Document[] {
+  return STAFF_DOC_DEFS.map((d) => ({ id: d.id, name: d.name, status: 'missing' as const }));
+}
+
+export function emptyOperatorDocs(): Document[] {
+  return OPERATOR_DOC_DEFS.map((d) => ({ id: d.id, name: d.name, status: 'missing' as const }));
+}
+
+export function addEmployee(input: {
+  name: string;
+  nationalId: string;
+  phone: string;
+  siteId?: string;
+  docs?: Document[];
+}) {
+  const docs = input.docs?.length ? input.docs : emptyStaffDocs();
   const emp: Employee = {
     id: `emp-${Date.now()}`,
     operatorId: state.currentOperatorId,
@@ -425,10 +457,118 @@ export function addEmployee(input: { name: string; nationalId: string; phone: st
     nationalId: input.nationalId.trim(),
     phone: input.phone.trim(),
     siteId: input.siteId || undefined,
-    active: true,
+    active: false,
+    docs,
+    reviewStatus: 'pending',
   };
   set((s) => ({ ...s, employees: [emp, ...s.employees] }));
   return emp;
+}
+
+export function uploadOperatorDoc(operatorId: string, docId: string, fileName: string) {
+  const now = new Date().toISOString();
+  set((s) => ({
+    ...s,
+    operators: s.operators.map((o) =>
+      o.id !== operatorId
+        ? o
+        : {
+            ...o,
+            docs: o.docs.map((d) =>
+              d.id === docId
+                ? { ...d, status: 'uploaded' as const, fileName, uploadedAt: now, note: undefined }
+                : d
+            ),
+          }
+    ),
+  }));
+}
+
+export function submitOperatorForReview(operatorId: string) {
+  set((s) => ({
+    ...s,
+    operators: s.operators.map((o) =>
+      o.id === operatorId
+        ? { ...o, status: 'pending' as LicenseStatus, submittedAt: new Date().toISOString(), rejectReason: undefined }
+        : o
+    ),
+  }));
+}
+
+export function uploadEmployeeDoc(employeeId: string, docId: string, fileName: string) {
+  const now = new Date().toISOString();
+  set((s) => ({
+    ...s,
+    employees: s.employees.map((e) =>
+      e.id !== employeeId
+        ? e
+        : {
+            ...e,
+            reviewStatus: 'pending' as ReviewStatus,
+            docs: e.docs.map((d) =>
+              d.id === docId
+                ? { ...d, status: 'uploaded' as const, fileName, uploadedAt: now, note: undefined }
+                : d
+            ),
+          }
+    ),
+  }));
+}
+
+export function approveEmployee(employeeId: string) {
+  set((s) => ({
+    ...s,
+    employees: s.employees.map((e) =>
+      e.id === employeeId
+        ? {
+            ...e,
+            reviewStatus: 'approved' as ReviewStatus,
+            active: true,
+            rejectReason: undefined,
+            docs: e.docs.map((d) =>
+              d.status === 'uploaded' || d.status === 'accepted' || d.status === 'expiring'
+                ? { ...d, status: 'accepted' as const }
+                : d
+            ),
+          }
+        : e
+    ),
+  }));
+}
+
+export function rejectEmployee(employeeId: string, reason: string) {
+  set((s) => ({
+    ...s,
+    employees: s.employees.map((e) =>
+      e.id === employeeId
+        ? { ...e, reviewStatus: 'rejected' as ReviewStatus, active: false, rejectReason: reason }
+        : e
+    ),
+  }));
+}
+
+export function requestDriverOtp(phone: string) {
+  const cleaned = phone.trim();
+  set({ driverAuth: { phone: cleaned, verified: false } });
+  return DEMO_OTP;
+}
+
+export function verifyDriverOtp(code: string): boolean {
+  if (code.trim() !== DEMO_OTP) return false;
+  const phone = state.driverAuth?.phone || '';
+  set({
+    driverAuth: { phone, verified: true, verifiedAt: new Date().toISOString() },
+  });
+  return true;
+}
+
+export function logoutDriver() {
+  set({ driverAuth: null });
+}
+
+export function docsProgress(docs: Document[]) {
+  const done = docs.filter((d) => d.status === 'uploaded' || d.status === 'accepted' || d.status === 'expiring').length;
+  return { done, total: docs.length, complete: done === docs.length && docs.length > 0 };
 }
 
 export function toggleEmployee(id: string) {
@@ -478,6 +618,20 @@ export const INCIDENT_LABELS: Record<IncidentType, string> = {
   delay: 'تأخير',
   unlicensed: 'فاليه غير مرخّص',
   other: 'أخرى',
+};
+
+export const DOC_STATUS_LABELS: Record<import('../types').DocStatus, string> = {
+  missing: 'غير مرفوعة',
+  uploaded: 'بانتظار المراجعة',
+  accepted: 'مقبولة',
+  expiring: 'تنتهي قريباً',
+  rejected: 'مرفوضة',
+};
+
+export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
+  pending: 'قيد المراجعة',
+  approved: 'معتمد',
+  rejected: 'مرفوض',
 };
 
 export const STATUS_LABELS: Record<LicenseStatus, string> = {

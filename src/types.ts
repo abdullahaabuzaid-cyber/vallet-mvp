@@ -1,6 +1,7 @@
 export type Role = 'gov' | 'operator' | 'staff' | 'driver';
 export type LicenseStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
-export type DocStatus = 'accepted' | 'missing' | 'expiring' | 'rejected';
+export type DocStatus = 'missing' | 'uploaded' | 'accepted' | 'expiring' | 'rejected';
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
 export type IncidentType = 'damage' | 'lost_keys' | 'delay' | 'unlicensed' | 'other';
 export type IncidentStatus = 'open' | 'investigating' | 'closed' | 'fined';
 export type HandoffStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled';
@@ -10,6 +11,8 @@ export interface Document {
   name: string;
   status: DocStatus;
   note?: string;
+  fileName?: string;
+  uploadedAt?: string;
 }
 
 export interface Site {
@@ -41,6 +44,9 @@ export interface Employee {
   phone: string;
   siteId?: string;
   active: boolean;
+  docs: Document[];
+  reviewStatus: ReviewStatus;
+  rejectReason?: string;
 }
 
 export interface Visit {
@@ -79,10 +85,15 @@ export interface Incident {
   createdAt: string;
   createdBy: string;
   plate?: string;
-  /** Optional map pin for unlicensed / field reports */
   lat?: number;
   lng?: number;
   area?: string;
+}
+
+export interface DriverAuth {
+  phone: string;
+  verified: boolean;
+  verifiedAt?: string;
 }
 
 export interface AppState {
@@ -97,4 +108,21 @@ export interface AppState {
   visitSeq: number;
   incidentSeq: number;
   handoffSeq: number;
+  driverAuth: DriverAuth | null;
 }
+
+export const OPERATOR_DOC_DEFS = [
+  { id: 'nid', name: 'الهوية الوطنية' },
+  { id: 'cr', name: 'السجل التجاري' },
+  { id: 'deed', name: 'سند الملكية / عقد الإيجار' },
+  { id: 'ins', name: 'تأمين المسؤولية' },
+  { id: 'clearance', name: 'شهادة عدم محكومية' },
+] as const;
+
+export const STAFF_DOC_DEFS = [
+  { id: 'nid', name: 'الهوية' },
+  { id: 'license', name: 'رخصة قيادة سارية' },
+  { id: 'clearance', name: 'شهادة عدم محكومية' },
+] as const;
+
+export const DEMO_OTP = '1234';

@@ -29,6 +29,7 @@ function formatDist(km: number) {
 
 export default function DriverHome() {
   const handoffs = useStore((s) => s.handoffs);
+  const driverAuth = useStore((s) => s.driverAuth);
   const [geo, setGeo] = useState<GeoState>({ status: 'loading' });
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [plate, setPlate] = useState('');
@@ -102,6 +103,7 @@ export default function DriverHome() {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!driverAuth?.verified) return;
     if (!selectedSiteId || !plate.trim()) return;
     const h = createHandoff(selectedSiteId, plate);
     setSubmittedId(h.id);
@@ -219,7 +221,19 @@ export default function DriverHome() {
           })}
         </div>
 
-        {selected && (
+        {!driverAuth?.verified && (
+          <div className="card handoff-sheet">
+            <strong>سجّل برقم هاتفك أولاً</strong>
+            <p className="muted" style={{ margin: '8px 0 12px' }}>
+              صاحب السيارة يحتاج هاتف + OTP فقط — بدون وثائق.
+            </p>
+            <Link to="/driver/auth" className="btn btn-primary" style={{ width: '100%' }}>
+              تسجيل الدخول بالهاتف
+            </Link>
+          </div>
+        )}
+
+        {selected && driverAuth?.verified && (
           <div className="handoff-sheet card">
             <div className="handoff-sheet-head">
               <div>

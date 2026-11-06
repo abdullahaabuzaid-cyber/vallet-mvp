@@ -25,12 +25,12 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/operator/requests', label: 'طلبات السائقين' },
     { to: '/operator/employees', label: 'الموظفون' },
     { to: '/operator/visits', label: 'الزيارات' },
-    { to: '/operator/license', label: 'الترخيص' },
+    { to: '/operator/license', label: 'التسجيل / الترخيص' },
   ],
   gov: [
     { to: '/gov', label: 'الملخص' },
     { to: '/gov/map', label: 'الخريطة' },
-    { to: '/gov/licenses', label: 'الطلبات' },
+    { to: '/gov/licenses', label: 'مراجعة التسجيل' },
     { to: '/gov/operators', label: 'المشغّلون' },
     { to: '/gov/visits', label: 'تدقيق' },
     { to: '/gov/incidents', label: 'بلاغات' },
@@ -38,6 +38,7 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
   driver: [
     { to: '/driver', label: 'المواقف' },
     { to: '/driver/status', label: 'طلباتي' },
+    { to: '/driver/auth', label: 'تسجيل الدخول' },
   ],
 };
 
@@ -73,6 +74,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="driver-top-actions" ref={menuRef}>
+            <Link to="/driver/auth" className="icon-chip" title="تسجيل الدخول">
+              📱
+            </Link>
             <Link to="/driver/status" className="icon-chip" title="طلباتي">
               📋
             </Link>
