@@ -1,3 +1,4 @@
+import { CapacityBoard } from '@/shared/components/ops/CapacityBoard';
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from '@/shared/components/ui/Icon';
 import { StatCard } from '@/shared/components/ui/StatCard';
@@ -35,6 +36,7 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
+      <CapacityBoard title="سعة موقفك الآن" />
       <Link to="/staff/cars" className="btn" style={{ width: '100%' }}>عرض السيارات الحالية ({cars.length})</Link>
     </div>
   );

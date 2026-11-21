@@ -21,6 +21,10 @@ export async function refreshAlerts() {
   for (const c of openComplaints) {
     found.push({ id: `complaints-${c.operator_id}`, kind: 'complaints', severity: 'medium', title: 'تكرار شكاوى على مشغّل', detail: `${c.n} شكاوى مفتوحة على المشغّل ${c.operator_id}` });
   }
+  const full = await q(`select s.id, s.name, s.capacity, count(v.id)::int n from sites s join visits v on v.site_id=s.id and v.check_out_at is null group by s.id having count(v.id) >= s.capacity`);
+  for (const s of full) {
+    found.push({ id: `full-${s.id}`, kind: 'lot_full', severity: 'medium', title: 'موقف ممتلئ', detail: `${s.name}: ${s.n}/${s.capacity} سيارة` });
+  }
   for (const a of found) {
     await q(
       `insert into alerts (id, kind, severity, title, detail) values ($1,$2,$3,$4,$5)

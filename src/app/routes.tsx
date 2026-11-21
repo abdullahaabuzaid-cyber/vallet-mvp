@@ -1,3 +1,6 @@
+import OperatorPricingPage from '@/features/operator/pages/PricingPage';
+import OperatorShiftsPage from '@/features/operator/pages/ShiftsPage';
+import OperatorContractsPage from '@/features/operator/pages/ContractsPage';
 import WalletPage from '@/features/driver/pages/WalletPage';
 import BookingPage from '@/features/driver/pages/BookingPage';
 import OperatorBookingsPage from '@/features/operator/pages/BookingsPage';
@@ -51,6 +54,9 @@ const PORTAL: Record<PortalRole, PortalRoute[]> = {
     { path: '/operator', element: <OperatorDashboardPage /> },
     { path: '/operator/requests', element: <OperatorRequestsPage /> },
     { path: '/operator/bookings', element: <OperatorBookingsPage /> },
+    { path: '/operator/pricing', element: <OperatorPricingPage /> },
+    { path: '/operator/shifts', element: <OperatorShiftsPage /> },
+    { path: '/operator/contracts', element: <OperatorContractsPage /> },
     { path: '/operator/employees', element: <OperatorEmployeesPage /> },
     { path: '/operator/visits', element: <OperatorCarLogPage /> },
     { path: '/operator/license', element: <OperatorLicensePage /> },

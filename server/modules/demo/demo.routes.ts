@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { seed } from '../../db/seed/index.ts';
+import { seedExpansion } from '../../db/seed/expansion.ts';
 import { DEMO_ACCOUNTS, DEMO_DRIVERS } from '../../db/seed/demoAccounts.ts';
 import { publish } from '../realtime/sse.ts';
 import { sms } from '../sms/sms.service.ts';
@@ -19,6 +20,7 @@ export const demoGovRouter = Router();
 
 demoGovRouter.post('/reset-demo', async (_req, res) => {
   await seed(true);
+  await seedExpansion();
   publish({ public: true }, { type: 'reset' });
   res.json({ ok: true });
 });

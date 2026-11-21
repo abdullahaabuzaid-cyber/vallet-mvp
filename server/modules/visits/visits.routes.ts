@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { checkCapacity } from '../capacity/capacity.service.ts';
+import { quote } from '../pricing/pricing.service.ts';
 import { requireCompleteEvidence } from '../condition/condition.guard.ts';
 import { q1 } from '../../db/pool.ts';
 import { mapVisit } from '../../db/mappers.ts';
@@ -26,7 +28,10 @@ visitsRouter.post('/visits/:id/request-return', requireRole('driver', 'staff', '
 });
 
 visitsRouter.post('/visits/checkin', requireRole('staff'), async (req, res) => {
-  const v = await checkIn(req.user!, req.body);
+  const v0 = await checkIn(req.user!, req.body);
+  const price = await quote(v0.site_id).catch(() => ({ fee: null }));
+  const v = price.fee == null ? v0 : await q1(`update visits set fee=$2 where id=$1 returning *`, [v0.id, price.fee]);
+  void checkCapacity(v.site_id);
   notifyOperator(v.operator_id, { type: 'visit_in', title: 'دخول سيارة', body: `${v.plate} — ${v.receipt_no}` });
   if (v.owner_phone) publish({ driverPhone: v.owner_phone }, { type: 'visit_in', title: 'تم استلام سيارتك', body: `${v.plate} — إيصال ${v.receipt_no}`, link: '/driver/status' });
   res.json({ visit: mapVisit(v) });

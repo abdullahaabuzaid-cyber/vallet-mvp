@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { requireRole } from '../../middleware/auth.ts';
+import { str } from '../../utils/http.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { createContract, endContract, invoiceMonth, listContractInvoices, listContracts, markPaid } from './contracts.service.ts';
+export const contractsRouter = Router();
+contractsRouter.use(['/contracts', '/contract-invoices'], requireRole('operator'));
+contractsRouter.get('/contracts', async (req, res) => res.json({ items: await listContracts(req.user!, listParams(req)) }));
+contractsRouter.post('/contracts', async (req, res) => res.json(await createContract(req.user!, req.body)));
+contractsRouter.post('/contracts/:id/end', async (req, res) => res.json(await endContract(req.user!, Number(req.params.id))));
+contractsRouter.post('/contracts/:id/invoice', async (req, res) => res.json(await invoiceMonth(req.user!, Number(req.params.id), str(req.body?.period, 7))));
+contractsRouter.get('/contract-invoices', async (req, res) => res.json({ items: await listContractInvoices(req.user!, listParams(req)) }));
+contractsRouter.post('/contract-invoices/:id/paid', async (req, res) => res.json(await markPaid(req.user!, Number(req.params.id))));

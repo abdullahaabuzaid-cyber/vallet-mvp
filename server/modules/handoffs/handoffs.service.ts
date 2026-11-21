@@ -1,3 +1,5 @@
+import { quote } from '../pricing/pricing.service.ts';
+import { checkCapacity } from '../capacity/capacity.service.ts';
 import { q1, tx, nextId, type DbClient } from '../../db/pool.ts';
 import { bad } from '../../utils/http.ts';
 import { notifyOperator } from '../realtime/notify.ts';
@@ -21,6 +23,8 @@ export async function acceptHandoffTx(c: DbClient, handoffId: string, employeeId
      values ($1,$2,$3,$4,$5,$6, now(), now(), 'تسليم من السائق عبر التطبيق', $7, $8) returning *`,
     [`v-${seq}`, `V-${seq}`, h.plate, h.operator_id, h.site_id, emp.id, h.id, h.owner_phone]
   )).rows[0];
+  const price=await quote(h.site_id);
+  if(price.fee!==null){await c.query(`update visits set fee=$2 where id=$1`,[v.id,price.fee]);v.fee=price.fee;}
   const h2 = (await c.query(
     `update handoffs set status='accepted', accepted_at = now(), assigned_employee_id = $2, visit_id = $3 where id = $1 returning *`,
     [h.id, emp.id, v.id]
@@ -29,6 +33,7 @@ export async function acceptHandoffTx(c: DbClient, handoffId: string, employeeId
 }
 
 export function notifyHandoffAccepted(h: any, v: any, empName: string) {
+  void checkCapacity(v.site_id);
   publish({ driverPhone: h.owner_phone, driverUserId: h.driver_user_id }, {
     type: 'handoff_accepted', title: 'تم استلام سيارتك', body: `${empName} استلم السيارة ${h.plate} — إيصال ${v.receipt_no}`, link: '/driver/status',
   });

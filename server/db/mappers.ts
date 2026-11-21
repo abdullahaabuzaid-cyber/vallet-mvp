@@ -23,7 +23,7 @@ export function mapVisit(v: any) {
     checkInBy: v.check_in_by, checkOutBy: und(v.check_out_by), checkInAt: iso(v.check_in_at)!, checkOutAt: iso(v.check_out_at),
     notes: und(v.notes), handoffId: und(v.handoff_id), carMake: und(v.car_make), carModel: und(v.car_model), carColor: und(v.car_color),
     ownerPhone: und(v.owner_phone), photoThumb: und(v.photo_thumb), parkedAt: iso(v.parked_at), returnRequestedAt: iso(v.return_requested_at),
-    readyAt: iso(v.ready_at), preparingAt: iso(v.preparing_at), arrivalEta: iso(v.arrival_eta), conditionStatus: und(v.condition_status),
+    readyAt: iso(v.ready_at), preparingAt: iso(v.preparing_at), arrivalEta: iso(v.arrival_eta), conditionStatus: und(v.condition_status), fee: v.fee == null ? undefined : Number(v.fee),
   };
 }
 

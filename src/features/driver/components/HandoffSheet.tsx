@@ -1,3 +1,5 @@
+import { useResource } from '@/shared/hooks/useResource';
+import { formatJod } from '@/shared/lib/format';
 import { Link } from 'react-router-dom';
 import type { MapLot } from '@/store';
 
@@ -11,6 +13,11 @@ type Props = {
 };
 
 /** Bottom sheet: sign-in prompt, or the plate form for the selected lot. */
+function PriceNow({ siteId }: { siteId: string }) {
+  const { data } = useResource<{ fee: number | null; rule: string | null }>(`/api/pricing/quote?siteId=${siteId}`, { fee: null, rule: null });
+  return data.fee == null ? null : <div className="muted tiny" data-testid="price-now">السعر الآن: <strong>{formatJod(data.fee)}</strong> · {data.rule}</div>;
+}
+
 export function HandoffSheet({ verified, selected, plate, onPlateChange, onCancel, onSubmit }: Props) {
   return (
     <>
@@ -39,6 +46,7 @@ export function HandoffSheet({ verified, selected, plate, onPlateChange, onCance
               إلغاء
             </button>
           </div>
+          <PriceNow siteId={selected.siteId} />
           <form onSubmit={onSubmit} className="stack">
             <div className="field">
               <label>رقم لوحة سيارتك</label>

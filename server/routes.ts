@@ -1,4 +1,8 @@
 import { Router } from 'express';
+import { pricingRouter } from './modules/pricing/pricing.routes.ts';
+import { capacityRouter } from './modules/capacity/capacity.routes.ts';
+import { shiftsRouter } from './modules/shifts/shifts.routes.ts';
+import { contractsRouter } from './modules/contracts/contracts.routes.ts';
 import { walletRouter } from './modules/wallet/wallet.routes.ts';
 import { bookingsRouter } from './modules/bookings/bookings.routes.ts';
 import { conditionRouter } from './modules/condition/condition.routes.ts';
@@ -27,6 +31,7 @@ import { visitsRouter } from './modules/visits/visits.routes.ts';
 export const apiRouter = Router();
 apiRouter.use(
   conditionRouter, arrivalRouter, publicReportsRouter, walletRouter, bookingsRouter,
+  pricingRouter, capacityRouter, shiftsRouter, contractsRouter,
   demoRouter, stateRouter, realtimeRouter, authRouter,
   handoffsRouter, visitsRouter, ratingsRouter, complaintsRouter, incidentsRouter,
   operatorsRouter, staffRouter, documentsRouter, licensesRouter, paymentsRouter,

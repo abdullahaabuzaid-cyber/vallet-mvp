@@ -1,3 +1,4 @@
+import { CapacityBoard } from '@/shared/components/ops/CapacityBoard';
 import { Link } from 'react-router-dom';
 import { empName, siteName, useStore } from '@/store';
 import { Badge } from '@/shared/components/ui/Badge';
@@ -58,6 +59,7 @@ export default function DashboardPage() {
         <StatCard label="طلبات سائقين" value={pendingHandoffs.length} icon="bell" tone="amber" />
         <StatCard label="بلاغات مفتوحة" value={incidents.length} icon="shield" tone="amber" />
       </div>
+      <CapacityBoard />
 
       <div className="card">
         <div className="section-head"><div><h2>لوحة اليوم — {op.name}</h2><p>الإشغال والفريق في كل موقف</p></div></div>

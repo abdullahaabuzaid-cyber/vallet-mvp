@@ -29,3 +29,9 @@ details>summary { cursor:pointer;color:var(--primary);padding:10px 0; }
 .driver-account-menu nav { position:absolute;left:0;top:46px;background:#fff;box-shadow:var(--shadow-lg);border:1px solid var(--border);border-radius:14px;padding:10px;min-width:180px;display:grid;gap:6px; }
 .driver-account-menu nav a { padding:8px;border-radius:8px; }
 @media(max-width:560px){.driver-topbar .brand small,.driver-topbar .brand-text { display:none; }.driver-top-actions{gap:6px}.driver-top-actions .icon-chip{width:36px;height:36px}.driver-topbar .brand{flex-shrink:0}.driver-top-actions .portal-menu-btn{padding:8px;font-size:11px}}
+
+.capacity-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px; }
+.capacity-tile { border:1px solid var(--border);border-radius:14px;padding:14px;display:grid;gap:8px;background:var(--surface); }
+.capacity-tile.is-near { border-color:#f0a92b;background:#fffaf0; } .capacity-tile.is-full { border-color:#e05252;background:#fff5f5; }
+.capacity-tile.is-full .bar-fill { background:linear-gradient(90deg,#e05252,#f08a8a); } .capacity-tile.is-near .bar-fill { background:linear-gradient(90deg,#f0a92b,#f7c669); }
+.capacity-count { font-size:1.1rem; } .capacity-count b { font-size:1.6rem; }

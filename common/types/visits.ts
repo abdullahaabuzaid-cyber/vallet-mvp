@@ -28,6 +28,8 @@ export interface Visit {
   preparingAt?: string;
   arrivalEta?: string;
   conditionStatus?: string;
+  /** Price applied at check-in from the operator pricing rules (JOD). */
+  fee?: number;
 }
 
 export interface VisitExtras {
