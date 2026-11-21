@@ -1,5 +1,6 @@
 // End-to-end verification across roles. Usage: BASE=http://localhost:8080 PREFIX=local node e2e/run.mjs
 import { chromium, devices } from 'playwright';
+import { filterChecks } from './filters.mjs';
 import fs from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8080';
@@ -155,6 +156,8 @@ try {
   ok('gov receives driver complaint', (await gov.p.getByTestId('complaint').filter({ hasText: plate }).count()) === 1);
   await gov.p.getByTestId('complaint').filter({ hasText: plate }).getByRole('button', { name: 'تمت المعالجة' }).click();
   await gov.p.waitForTimeout(500);
+
+  await filterChecks({ BASE, gov, op, plate, ok, settle });
 
   // operator uploads a real document; gov can open it
   await op.p.goto(`${BASE}/operator/license`);
