@@ -40,19 +40,19 @@ export default function CheckIn() {
     setPhotoThumb(undefined);
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!plate.trim()) return;
-    setVisit(
-      checkIn(plate, {
-        notes,
-        carMake,
-        carModel,
-        carColor,
-        ownerPhone,
-        photoThumb,
-      })
-    );
+    const v = await checkIn(plate, {
+      notes,
+      carMake,
+      carModel,
+      carColor,
+      ownerPhone,
+      photoThumb,
+    });
+    if (!v) return;
+    setVisit(v);
     resetForm();
   }
 

@@ -1,0 +1,23 @@
+{
+  "name": "فاليت — مواقف فاليه مرخّصة في عمّان",
+  "short_name": "فاليت",
+  "description": "منصة هيئة تنظيم الفاليه في عمّان: مواقف مرخّصة، تسليم واستلام السيارات، ورقابة حكومية.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/driver?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2f7",
+  "theme_color": "#0b1f3a",
+  "categories": ["navigation", "travel", "government"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "طلباتي", "url": "/driver/status", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "دخول الجهات", "url": "/login", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

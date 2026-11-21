@@ -25,12 +25,6 @@ class ErrorBoundary extends Component<
               className="btn btn-primary"
               type="button"
               onClick={() => {
-                try {
-                  localStorage.removeItem('vallet-mvp-v7');
-                  localStorage.removeItem('vallet-mvp-v6');
-                } catch {
-                  /* ignore */
-                }
                 window.location.href = '/';
               }}
             >
@@ -42,6 +36,19 @@ class ErrorBoundary extends Component<
     }
     return this.props.children;
   }
+}
+
+// Old localStorage-only demo data is no longer used — data lives on the server now.
+try {
+  for (let i = 1; i <= 8; i++) localStorage.removeItem(`vallet-mvp-v${i}`);
+} catch {
+  /* private mode */
+}
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

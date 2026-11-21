@@ -26,8 +26,8 @@ export default function CheckOut() {
     );
   }, [visits, q, emp.operatorId]);
 
-  function confirm(id: string, receipt: string) {
-    checkOut(id);
+  async function confirm(id: string, receipt: string) {
+    if (!(await checkOut(id))) return;
     setDone(receipt);
     setQ('');
   }
@@ -38,14 +38,14 @@ export default function CheckOut() {
         <h2>خروج سيارة</h2>
         <p className="muted">صوّر النمرة للمطابقة التلقائية أو ابحث يدوياً</p>
         <PlateScanner
-          onPlate={(plate) => {
+          onPlate={async (plate) => {
             const active = findActiveVisitByPlate(plate, emp.operatorId);
             if (!active) {
               setScanMsg(`لا زيارة مفتوحة لـ ${plate}`);
               setQ(plate);
               return;
             }
-            checkOut(active.id);
+            if (!(await checkOut(active.id))) return;
             setDone(active.receiptNo);
             setScanMsg(`تمت مطابقة ${plate} وإغلاق ${active.receiptNo}`);
           }}

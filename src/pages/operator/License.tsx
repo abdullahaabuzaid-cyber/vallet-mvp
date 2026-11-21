@@ -4,6 +4,7 @@ import {
   docsProgress,
   STATUS_LABELS,
   submitOperatorForReview,
+  documentFileUrl,
   uploadOperatorDoc,
   useStore,
 } from '../../store/useStore';
@@ -61,7 +62,14 @@ export default function License() {
                 <Badge tone={toneFor(d.status)}>{DOC_STATUS_LABELS[d.status]}</Badge>
               </div>
               {d.fileName && (
-                <div className="muted reg-file">📎 {d.fileName}</div>
+                <div className="muted reg-file">
+                  📎{' '}
+                  {documentFileUrl(d) ? (
+                    <a href={documentFileUrl(d)} target="_blank" rel="noreferrer">{d.fileName}</a>
+                  ) : (
+                    d.fileName
+                  )}
+                </div>
               )}
               {d.note && <div className="muted">{d.note}</div>}
               <div className="row" style={{ marginTop: 8 }}>
@@ -74,7 +82,7 @@ export default function License() {
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (!f) return;
-                      uploadOperatorDoc(op.id, d.id, f.name);
+                      void uploadOperatorDoc(op.id, d.id, f);
                       e.target.value = '';
                     }}
                   />

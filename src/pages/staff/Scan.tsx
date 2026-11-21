@@ -86,10 +86,10 @@ export default function StaffScan() {
     setPending({ plate, source: meta.source, raw: meta.raw, mode: 'out', active });
   }
 
-  function confirmPending() {
+  async function confirmPending() {
     if (!pending) return;
     if (pending.mode === 'in') {
-      const visit = checkIn(pending.plate, {
+      const visit = await checkIn(pending.plate, {
         notes,
         carMake,
         carModel,
@@ -97,10 +97,11 @@ export default function StaffScan() {
         ownerPhone,
         photoThumb,
       });
+      if (!visit) return;
       setLastIn(visit);
       setMsg(`تم الدخول وختم الوقت · المصدر: ${pending.source}`);
     } else if (pending.active) {
-      checkOut(pending.active.id);
+      if (!(await checkOut(pending.active.id))) return;
       setLastOut({ ...pending.active, checkOutAt: new Date().toISOString(), checkOutBy: empId });
       setMsg(`تم مطابقة اللوحة وإغلاق الزيارة ${pending.active.receiptNo}`);
     }

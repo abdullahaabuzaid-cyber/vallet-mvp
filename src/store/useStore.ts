@@ -1,148 +1,53 @@
 import { useRef, useCallback, useSyncExternalStore } from 'react';
-import { SEED } from '../data/seed';
 import type {
   AppState,
+  ComplaintCategory,
+  ComplaintStatus,
   Document,
-  Employee,
   HandoffRequest,
-  Incident,
   IncidentStatus,
   IncidentType,
   LicenseStatus,
   ReviewStatus,
-  Role,
-  Site,
   Visit,
   VisitExtras,
 } from '../types';
-import { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS } from '../types';
-export { DEMO_OTP, OPERATOR_DOC_DEFS, STAFF_DOC_DEFS };
-
-/** Bump when seed shape changes; old keys are cleared safely */
-const KEY = 'vallet-mvp-v8';
-const LEGACY_KEYS = ['vallet-mvp-v1', 'vallet-mvp-v2', 'vallet-mvp-v3', 'vallet-mvp-v4', 'vallet-mvp-v5', 'vallet-mvp-v6', 'vallet-mvp-v7'];
+import { OPERATOR_DOC_DEFS, STAFF_DOC_DEFS } from '../types';
+import { api, apiForm, ApiError } from '../lib/api';
+import { toast } from '../lib/toast';
+export { OPERATOR_DOC_DEFS, STAFF_DOC_DEFS };
 
 function isFiniteCoord(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n);
 }
 
-function sanitizeSite(site: Partial<Site> | undefined, fallback?: Site): Site | null {
-  if (!site && !fallback) return null;
-  const id = site?.id || fallback?.id;
-  const name = site?.name || fallback?.name;
-  const area = site?.area || fallback?.area || 'عمّان';
-  if (!id || !name) return null;
-  const lat = isFiniteCoord(site?.lat) ? site!.lat : fallback?.lat;
-  const lng = isFiniteCoord(site?.lng) ? site!.lng : fallback?.lng;
-  if (!isFiniteCoord(lat) || !isFiniteCoord(lng)) return null;
-  const capacity =
-    typeof site?.capacity === 'number' && site.capacity > 0
-      ? site.capacity
-      : typeof fallback?.capacity === 'number' && fallback.capacity > 0
-        ? fallback.capacity
-        : 10;
-  return { id, name, area, lat, lng, capacity };
-}
+const EMPTY: AppState = {
+  loaded: false,
+  session: null,
+  role: 'driver',
+  currentEmployeeId: '',
+  currentOperatorId: '',
+  operators: [],
+  employees: [],
+  visits: [],
+  incidents: [],
+  handoffs: [],
+  complaints: [],
+  ratings: [],
+  invoices: [],
+  alerts: [],
+  lotRatings: {},
+  visitSeq: 0,
+  incidentSeq: 0,
+  handoffSeq: 0,
+  driverAuth: null,
+};
 
-function migrate(parsed: Partial<AppState>): AppState {
-  const base = structuredClone(SEED);
-  const seedByOp = new Map(base.operators.map((o) => [o.id, o]));
-  const seedSiteById = new Map<string, Site>();
-  for (const o of base.operators) {
-    for (const s of o.sites) seedSiteById.set(s.id, s);
-  }
-
-  const operators =
-    Array.isArray(parsed.operators) && parsed.operators.length
-      ? parsed.operators.map((op) => {
-          const seedOp = seedByOp.get(op.id);
-          const sitesRaw = Array.isArray(op.sites) ? op.sites : seedOp?.sites ?? [];
-          const sites = sitesRaw
-            .map((s) => sanitizeSite(s, s?.id ? seedSiteById.get(s.id) : undefined))
-            .filter((s): s is Site => !!s);
-          return {
-            ...seedOp,
-            ...op,
-            docs: Array.isArray(op.docs) && op.docs.length ? op.docs : seedOp?.docs ?? [],
-            sites: sites.length ? sites : seedOp?.sites ?? [],
-            status: op.status ?? seedOp?.status ?? 'pending',
-            name: op.name || seedOp?.name || 'مشغّل',
-            area: op.area || seedOp?.area || 'عمّان',
-            submittedAt: op.submittedAt || seedOp?.submittedAt || new Date().toISOString(),
-            autoAcceptHandoffs: op.autoAcceptHandoffs ?? seedOp?.autoAcceptHandoffs ?? false,
-          };
-        })
-      : base.operators;
-
-  const role: Role =
-    parsed.role === 'gov' ||
-    parsed.role === 'operator' ||
-    parsed.role === 'staff' ||
-    parsed.role === 'driver'
-      ? parsed.role
-      : base.role;
-
-  const employees = (Array.isArray(parsed.employees) ? parsed.employees : base.employees).map((e) => {
-    const docs =
-      Array.isArray(e.docs) && e.docs.length
-        ? e.docs
-        : STAFF_DOC_DEFS.map((d) => ({ id: d.id, name: d.name, status: 'missing' as const }));
-    return {
-      ...e,
-      docs,
-      reviewStatus: (e.reviewStatus as ReviewStatus) || 'approved',
-    };
-  });
-
-  return {
-    ...base,
-    ...parsed,
-    role,
-    operators,
-    employees,
-    visits: Array.isArray(parsed.visits) ? parsed.visits : base.visits,
-    incidents: Array.isArray(parsed.incidents) ? parsed.incidents : base.incidents,
-    handoffs: Array.isArray(parsed.handoffs) ? parsed.handoffs : [],
-    visitSeq: typeof parsed.visitSeq === 'number' ? parsed.visitSeq : base.visitSeq,
-    incidentSeq: typeof parsed.incidentSeq === 'number' ? parsed.incidentSeq : base.incidentSeq,
-    handoffSeq: typeof parsed.handoffSeq === 'number' ? parsed.handoffSeq : base.handoffSeq,
-    currentEmployeeId: parsed.currentEmployeeId || base.currentEmployeeId,
-    currentOperatorId: parsed.currentOperatorId || base.currentOperatorId,
-    driverAuth: parsed.driverAuth ?? base.driverAuth ?? null,
-  };
-}
-
-function load(): AppState {
-  try {
-    for (const k of LEGACY_KEYS) {
-      if (localStorage.getItem(k) != null) localStorage.removeItem(k);
-    }
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<AppState>;
-      return migrate(parsed);
-    }
-  } catch {
-    /* ignore corrupt storage */
-  }
-  return structuredClone(SEED);
-}
-
-let state: AppState = load();
+let state: AppState = EMPTY;
 const listeners = new Set<() => void>();
 
 function emit() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    /* quota / private mode */
-  }
   listeners.forEach((l) => l());
-}
-
-function set(partial: Partial<AppState> | ((s: AppState) => AppState)) {
-  state = typeof partial === 'function' ? partial(state) : { ...state, ...partial };
-  emit();
 }
 
 export function getState() {
@@ -164,28 +69,157 @@ export function subscribe(cb: () => void) {
 export function useStore<T>(selector: (s: AppState) => T): T {
   const selectorRef = useRef(selector);
   selectorRef.current = selector;
-  const cacheRef = useRef<{ state: AppState; selected: T } | null>(null);
+  const cacheRef = useRef<{ state: AppState; selector: (s: AppState) => T; selected: T } | null>(null);
 
+  // Cache per (state, selector) pair: repeated calls within one render are stable,
+  // but a selector that closes over new props/state is re-run on the next render.
   const getSnapshot = useCallback(() => {
     const cached = cacheRef.current;
-    if (cached && cached.state === state) return cached.selected;
-    const selected = selectorRef.current(state);
-    cacheRef.current = { state, selected };
+    const sel = selectorRef.current;
+    if (cached && cached.state === state && cached.selector === sel) return cached.selected;
+    const selected = sel(state);
+    cacheRef.current = { state, selector: sel, selected };
     return selected;
   }, []);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-export function setRole(role: Role) {
-  set({ role });
+type ServerState = Omit<AppState, 'loaded' | 'role' | 'currentEmployeeId' | 'currentOperatorId' | 'visitSeq' | 'incidentSeq' | 'handoffSeq' | 'driverAuth'>;
+
+function applyServer(d: ServerState) {
+  const prevSessionId = state.session?.id ?? null;
+  const sess = d.session;
+  state = {
+    ...state,
+    ...d,
+    loaded: true,
+    role: sess?.role ?? 'driver',
+    currentEmployeeId: sess?.employeeId ?? '',
+    currentOperatorId: sess?.operatorId ?? '',
+    driverAuth: sess?.role === 'driver' ? { phone: sess.phone || '', verified: true } : null,
+  };
+  emit();
+  if ((sess?.id ?? null) !== prevSessionId) restartRealtime();
 }
+
+let inflight: Promise<void> | null = null;
+let again = false;
+export function refresh(): Promise<void> {
+  if (inflight) {
+    again = true;
+    return inflight;
+  }
+  inflight = (async () => {
+    try {
+      do {
+        again = false;
+        const d = await api<ServerState>('/api/state');
+        applyServer(d);
+      } while (again);
+    } catch (e) {
+      if (!state.loaded) {
+        state = { ...state, loaded: true };
+        emit();
+      }
+      toast('تعذّر تحميل البيانات', { body: (e as Error).message, tone: 'bad' });
+    } finally {
+      inflight = null;
+    }
+  })();
+  return inflight;
+}
+
+// ---------- realtime (SSE) ----------
+let es: EventSource | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+export type RtEvent = { type: string; title?: string; body?: string; link?: string };
+const rtListeners = new Set<(e: RtEvent) => void>();
+export function onRealtime(cb: (e: RtEvent) => void) {
+  rtListeners.add(cb);
+  return () => {
+    rtListeners.delete(cb);
+  };
+}
+let rtConnected = false;
+const rtSubs = new Set<() => void>();
+export function useRealtimeConnected() {
+  return useSyncExternalStore(
+    (cb) => {
+      rtSubs.add(cb);
+      return () => rtSubs.delete(cb);
+    },
+    () => rtConnected,
+    () => rtConnected
+  );
+}
+function setRt(v: boolean) {
+  if (rtConnected !== v) {
+    rtConnected = v;
+    rtSubs.forEach((s) => s());
+  }
+}
+
+export function restartRealtime() {
+  if (typeof EventSource === 'undefined') return;
+  es?.close();
+  es = new EventSource('/api/events');
+  es.addEventListener('open', () => setRt(true));
+  es.addEventListener('error', () => setRt(false));
+  es.addEventListener('change', (msg) => {
+    let ev: RtEvent = { type: 'change' };
+    try {
+      ev = JSON.parse((msg as MessageEvent).data);
+    } catch {
+      /* ignore */
+    }
+    if (ev.title) toast(ev.title, { body: ev.body, link: ev.link, tone: 'info' });
+    rtListeners.forEach((l) => l(ev));
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => void refresh(), 150);
+  });
+}
+
+/** Run a server mutation, refresh state, toast errors. Returns null on failure. */
+async function run<T>(fn: () => Promise<T>, okMsg?: string): Promise<T | null> {
+  try {
+    const r = await fn();
+    await refresh();
+    if (okMsg) toast(okMsg, { tone: 'ok' });
+    return r;
+  } catch (e) {
+    toast(e instanceof ApiError ? e.message : 'حدث خطأ غير متوقع', { tone: 'bad' });
+    return null;
+  }
+}
+
+// ---------- auth ----------
+export async function login(username: string, password: string) {
+  const r = await api<{ ok: boolean; role: string }>('/api/auth/login', { username, password });
+  await refresh();
+  return r;
+}
+
+export async function logout() {
+  await api('/api/auth/logout', {});
+  await refresh();
+}
+
+export async function requestDriverOtp(phone: string) {
+  return api<{ ok: boolean; phone: string; devMode: boolean; devCode?: string; provider: string }>('/api/auth/otp/request', { phone });
+}
+
+export async function verifyDriverOtp(phone: string, code: string) {
+  await api('/api/auth/otp/verify', { phone, code });
+  await refresh();
+  return true;
+}
+
+export const logoutDriver = logout;
 
 export function resetDemo() {
-  state = structuredClone(SEED);
-  emit();
+  return run(() => api('/api/gov/reset-demo', {}), 'تمت إعادة البيانات التجريبية');
 }
-
 export function empName(id: string) {
   return state.employees.find((e) => e.id === id)?.name ?? id;
 }
@@ -259,58 +293,8 @@ export function licensedLotsNear(origin: { lat: number; lng: number }) {
   return lots.sort((a, b) => a.distanceKm - b.distanceKm);
 }
 
-export function checkIn(plate: string, notesOrExtras: string | VisitExtras = '', extras?: VisitExtras): Visit {
-  const emp = state.employees.find((e) => e.id === state.currentEmployeeId)!;
-  const seq = state.visitSeq + 1;
-  const extra: VisitExtras =
-    typeof notesOrExtras === 'string'
-      ? { ...(extras || {}), notes: notesOrExtras }
-      : { ...notesOrExtras, ...(extras || {}) };
-  const now = new Date().toISOString();
-  const visit: Visit = {
-    id: `v-${seq}`,
-    receiptNo: `V-${seq}`,
-    plate: plate.trim(),
-    operatorId: emp.operatorId,
-    siteId: emp.siteId || state.operators.find((o) => o.id === emp.operatorId)!.sites[0].id,
-    checkInBy: emp.id,
-    checkInAt: now,
-    parkedAt: extra.parkedAt || now,
-    notes: extra.notes?.trim() || undefined,
-    carMake: extra.carMake?.trim() || undefined,
-    carModel: extra.carModel?.trim() || undefined,
-    carColor: extra.carColor?.trim() || undefined,
-    ownerPhone: extra.ownerPhone?.trim() || undefined,
-    photoThumb: extra.photoThumb || undefined,
-    handoffId: extra.handoffId,
-  };
-  set((s) => ({
-    ...s,
-    visitSeq: seq,
-    visits: [visit, ...s.visits],
-  }));
-  return visit;
-}
 
-export function markParked(visitId: string) {
-  set((s) => ({
-    ...s,
-    visits: s.visits.map((v) =>
-      v.id === visitId && !v.parkedAt ? { ...v, parkedAt: new Date().toISOString() } : v
-    ),
-  }));
-}
 
-export function requestReturn(visitId: string) {
-  set((s) => ({
-    ...s,
-    visits: s.visits.map((v) =>
-      v.id === visitId && !v.checkOutAt
-        ? { ...v, returnRequestedAt: v.returnRequestedAt || new Date().toISOString() }
-        : v
-    ),
-  }));
-}
 
 export function visitStatusLabel(v: Visit): 'داخل الموقف' | 'تم التسليم' | 'بانتظار التسليم' {
   if (v.checkOutAt) return 'تم التسليم';
@@ -378,16 +362,6 @@ export function visitTimeline(v: Visit): TimelineStep[] {
   return steps;
 }
 
-export function checkOut(visitId: string) {
-  set((s) => ({
-    ...s,
-    visits: s.visits.map((v) =>
-      v.id === visitId && !v.checkOutAt
-        ? { ...v, checkOutAt: new Date().toISOString(), checkOutBy: s.currentEmployeeId }
-        : v
-    ),
-  }));
-}
 
 export function siteOccupancy(siteId: string) {
   return state.visits.filter((v) => v.siteId === siteId && !v.checkOutAt).length;
@@ -400,179 +374,15 @@ export function siteHasCapacity(siteId: string) {
   return siteOccupancy(siteId) < cap;
 }
 
-export function setAutoAcceptHandoffs(operatorId: string, enabled: boolean) {
-  set((s) => ({
-    ...s,
-    operators: s.operators.map((o) => (o.id === operatorId ? { ...o, autoAcceptHandoffs: enabled } : o)),
-  }));
-}
 
-export function createHandoff(siteId: string, plate: string, ownerPhone?: string): HandoffRequest {
-  const found = siteById(siteId);
-  if (!found) throw new Error('site not found');
-  const seq = state.handoffSeq + 1;
-  const phone = ownerPhone?.trim() || state.driverAuth?.phone || undefined;
-  const handoff: HandoffRequest = {
-    id: `h-${seq}`,
-    plate: plate.trim(),
-    siteId,
-    operatorId: found.operator.id,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-    ownerPhone: phone,
-  };
-  set((s) => ({
-    ...s,
-    handoffSeq: seq,
-    handoffs: [handoff, ...s.handoffs],
-  }));
 
-  // Auto-accept when operator enabled it and lot has free capacity
-  if (found.operator.autoAcceptHandoffs && siteHasCapacity(siteId)) {
-    const emp =
-      state.employees.find((e) => e.operatorId === found.operator.id && e.active && e.siteId === siteId) ||
-      state.employees.find((e) => e.operatorId === found.operator.id && e.active && e.reviewStatus === 'approved');
-    if (emp) {
-      acceptHandoff(handoff.id, emp.id);
-      return getState().handoffs.find((h) => h.id === handoff.id) || handoff;
-    }
-  }
-  return handoff;
-}
 
-export function acceptHandoff(handoffId: string, employeeId: string): Visit | null {
-  const handoff = state.handoffs.find((h) => h.id === handoffId);
-  if (!handoff || handoff.status !== 'pending') return null;
-  const emp = state.employees.find((e) => e.id === employeeId && e.active);
-  if (!emp || emp.operatorId !== handoff.operatorId) return null;
 
-  const seq = state.visitSeq + 1;
-  const now = new Date().toISOString();
-  const visit: Visit = {
-    id: `v-${seq}`,
-    receiptNo: `V-${seq}`,
-    plate: handoff.plate,
-    operatorId: handoff.operatorId,
-    siteId: handoff.siteId,
-    checkInBy: emp.id,
-    checkInAt: now,
-    parkedAt: now,
-    notes: 'تسليم من السائق عبر التطبيق',
-    handoffId: handoff.id,
-    ownerPhone: handoff.ownerPhone,
-  };
 
-  set((s) => ({
-    ...s,
-    visitSeq: seq,
-    visits: [visit, ...s.visits],
-    handoffs: s.handoffs.map((h) =>
-      h.id === handoffId
-        ? {
-            ...h,
-            status: 'accepted' as const,
-            acceptedAt: visit.checkInAt,
-            assignedEmployeeId: emp.id,
-            visitId: visit.id,
-          }
-        : h
-    ),
-  }));
-  return visit;
-}
 
-export function rejectHandoff(handoffId: string) {
-  set((s) => ({
-    ...s,
-    handoffs: s.handoffs.map((h) =>
-      h.id === handoffId && h.status === 'pending'
-        ? { ...h, status: 'rejected' as const }
-        : h
-    ),
-  }));
-}
 
-export function cancelHandoff(handoffId: string) {
-  set((s) => ({
-    ...s,
-    handoffs: s.handoffs.map((h) =>
-      h.id === handoffId && h.status === 'pending'
-        ? { ...h, status: 'cancelled' as const }
-        : h
-    ),
-  }));
-}
 
-export function addIncident(input: {
-  type: IncidentType;
-  description: string;
-  visitId?: string;
-  plate?: string;
-  operatorId?: string;
-}) {
-  const seq = state.incidentSeq + 1;
-  const incident: Incident = {
-    id: `inc-${seq}`,
-    type: input.type,
-    description: input.description.trim(),
-    visitId: input.visitId,
-    plate: input.plate,
-    operatorId: input.operatorId ?? state.employees.find((e) => e.id === state.currentEmployeeId)?.operatorId,
-    status: 'open',
-    createdAt: new Date().toISOString(),
-    createdBy: state.role === 'gov' ? 'gov' : state.currentEmployeeId,
-  };
-  set((s) => ({
-    ...s,
-    incidentSeq: seq,
-    incidents: [incident, ...s.incidents],
-  }));
-  return incident;
-}
 
-export function updateIncidentStatus(id: string, status: IncidentStatus) {
-  set((s) => ({
-    ...s,
-    incidents: s.incidents.map((i) => (i.id === id ? { ...i, status } : i)),
-  }));
-}
-
-export function approveLicense(operatorId: string) {
-  const year = new Date().getFullYear();
-  set((s) => ({
-    ...s,
-    operators: s.operators.map((o) =>
-      o.id === operatorId
-        ? {
-            ...o,
-            status: 'approved' as LicenseStatus,
-            licenseNo: o.licenseNo || `LIC-AMM-${year}-${String(Math.floor(Math.random() * 900) + 100)}`,
-            licenseExpiry: `${year + 1}-12-31`,
-            rejectReason: undefined,
-            docs: o.docs.map((d) => ({ ...d, status: 'accepted' as const, note: undefined })),
-          }
-        : o
-    ),
-  }));
-}
-
-export function rejectLicense(operatorId: string, reason: string) {
-  set((s) => ({
-    ...s,
-    operators: s.operators.map((o) =>
-      o.id === operatorId
-        ? { ...o, status: 'rejected' as LicenseStatus, rejectReason: reason }
-        : o
-    ),
-  }));
-}
-
-export function setOperatorStatus(operatorId: string, status: LicenseStatus) {
-  set((s) => ({
-    ...s,
-    operators: s.operators.map((o) => (o.id === operatorId ? { ...o, status } : o)),
-  }));
-}
 
 export function emptyStaffDocs(): Document[] {
   return STAFF_DOC_DEFS.map((d) => ({ id: d.id, name: d.name, status: 'missing' as const }));
@@ -582,145 +392,21 @@ export function emptyOperatorDocs(): Document[] {
   return OPERATOR_DOC_DEFS.map((d) => ({ id: d.id, name: d.name, status: 'missing' as const }));
 }
 
-export function addEmployee(input: {
-  name: string;
-  nationalId: string;
-  phone: string;
-  siteId?: string;
-  docs?: Document[];
-}) {
-  const docs = input.docs?.length ? input.docs : emptyStaffDocs();
-  const emp: Employee = {
-    id: `emp-${Date.now()}`,
-    operatorId: state.currentOperatorId,
-    name: input.name.trim(),
-    nationalId: input.nationalId.trim(),
-    phone: input.phone.trim(),
-    siteId: input.siteId || undefined,
-    active: false,
-    docs,
-    reviewStatus: 'pending',
-  };
-  set((s) => ({ ...s, employees: [emp, ...s.employees] }));
-  return emp;
-}
 
-export function uploadOperatorDoc(operatorId: string, docId: string, fileName: string) {
-  const now = new Date().toISOString();
-  set((s) => ({
-    ...s,
-    operators: s.operators.map((o) =>
-      o.id !== operatorId
-        ? o
-        : {
-            ...o,
-            docs: o.docs.map((d) =>
-              d.id === docId
-                ? { ...d, status: 'uploaded' as const, fileName, uploadedAt: now, note: undefined }
-                : d
-            ),
-          }
-    ),
-  }));
-}
 
-export function submitOperatorForReview(operatorId: string) {
-  set((s) => ({
-    ...s,
-    operators: s.operators.map((o) =>
-      o.id === operatorId
-        ? { ...o, status: 'pending' as LicenseStatus, submittedAt: new Date().toISOString(), rejectReason: undefined }
-        : o
-    ),
-  }));
-}
 
-export function uploadEmployeeDoc(employeeId: string, docId: string, fileName: string) {
-  const now = new Date().toISOString();
-  set((s) => ({
-    ...s,
-    employees: s.employees.map((e) =>
-      e.id !== employeeId
-        ? e
-        : {
-            ...e,
-            reviewStatus: 'pending' as ReviewStatus,
-            docs: e.docs.map((d) =>
-              d.id === docId
-                ? { ...d, status: 'uploaded' as const, fileName, uploadedAt: now, note: undefined }
-                : d
-            ),
-          }
-    ),
-  }));
-}
 
-export function approveEmployee(employeeId: string) {
-  set((s) => ({
-    ...s,
-    employees: s.employees.map((e) =>
-      e.id === employeeId
-        ? {
-            ...e,
-            reviewStatus: 'approved' as ReviewStatus,
-            active: true,
-            rejectReason: undefined,
-            docs: e.docs.map((d) =>
-              d.status === 'uploaded' || d.status === 'accepted' || d.status === 'expiring'
-                ? { ...d, status: 'accepted' as const }
-                : d
-            ),
-          }
-        : e
-    ),
-  }));
-}
 
-export function rejectEmployee(employeeId: string, reason: string) {
-  set((s) => ({
-    ...s,
-    employees: s.employees.map((e) =>
-      e.id === employeeId
-        ? { ...e, reviewStatus: 'rejected' as ReviewStatus, active: false, rejectReason: reason }
-        : e
-    ),
-  }));
-}
 
-export function requestDriverOtp(phone: string) {
-  const cleaned = phone.trim();
-  set({ driverAuth: { phone: cleaned, verified: false } });
-  return DEMO_OTP;
-}
 
-export function verifyDriverOtp(code: string): boolean {
-  if (code.trim() !== DEMO_OTP) return false;
-  const phone = state.driverAuth?.phone || '';
-  set({
-    driverAuth: { phone, verified: true, verifiedAt: new Date().toISOString() },
-  });
-  return true;
-}
 
-export function logoutDriver() {
-  set({ driverAuth: null });
-}
 
 export function docsProgress(docs: Document[]) {
   const done = docs.filter((d) => d.status === 'uploaded' || d.status === 'accepted' || d.status === 'expiring').length;
   return { done, total: docs.length, complete: done === docs.length && docs.length > 0 };
 }
 
-export function toggleEmployee(id: string) {
-  set((s) => ({
-    ...s,
-    employees: s.employees.map((e) => (e.id === id ? { ...e, active: !e.active } : e)),
-  }));
-}
 
-export function setCurrentEmployee(id: string) {
-  set({ currentEmployeeId: id });
-}
 
 export function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ar-JO', {
@@ -920,4 +606,199 @@ export function unlicensedPins() {
       lng: i.lng as number,
       statusLabel: INCIDENT_STATUS_LABELS[i.status],
     }));
+}
+
+// ---------- mutations (server-backed) ----------
+export async function checkIn(plate: string, notesOrExtras: string | VisitExtras = '', extras?: VisitExtras): Promise<Visit | null> {
+  const extra: VisitExtras =
+    typeof notesOrExtras === 'string' ? { ...(extras || {}), notes: notesOrExtras } : { ...notesOrExtras, ...(extras || {}) };
+  const r = await run(() => api<{ visit: Visit }>('/api/visits/checkin', { plate, ...extra }));
+  return r?.visit ?? null;
+}
+
+export function markParked(visitId: string) {
+  return run(() => api(`/api/visits/${visitId}/parked`, {}));
+}
+
+export function markReady(visitId: string) {
+  return run(() => api(`/api/visits/${visitId}/ready`, {}), 'تم إشعار صاحب السيارة بأنها جاهزة');
+}
+
+export function requestReturn(visitId: string) {
+  return run(() => api(`/api/visits/${visitId}/request-return`, {}), 'تم إرسال طلب إرجاع السيارة');
+}
+
+export function checkOut(visitId: string) {
+  return run(() => api(`/api/visits/${visitId}/checkout`, {}));
+}
+
+export function setAutoAcceptHandoffs(_operatorId: string, enabled: boolean) {
+  return run(() => api('/api/operator/auto-accept', { enabled }));
+}
+
+export async function createHandoff(siteId: string, plate: string): Promise<HandoffRequest | null> {
+  const r = await run(() => api<{ handoff: HandoffRequest }>('/api/handoffs', { siteId, plate }));
+  return r?.handoff ?? null;
+}
+
+export async function acceptHandoff(handoffId: string, employeeId: string): Promise<Visit | null> {
+  const r = await run(() => api<{ visit: Visit }>(`/api/handoffs/${handoffId}/accept`, { employeeId }), 'تم قبول الطلب وإنشاء الزيارة');
+  return r?.visit ?? null;
+}
+
+export function rejectHandoff(handoffId: string) {
+  return run(() => api(`/api/handoffs/${handoffId}/reject`, {}));
+}
+
+export function cancelHandoff(handoffId: string) {
+  return run(() => api(`/api/handoffs/${handoffId}/cancel`, {}));
+}
+
+export async function addIncident(input: {
+  type: IncidentType;
+  description: string;
+  visitId?: string;
+  plate?: string;
+  operatorId?: string;
+  lat?: number;
+  lng?: number;
+  area?: string;
+}) {
+  const r = await run(() => api<{ incident: { id: string } }>('/api/incidents', input), 'تم تسجيل البلاغ');
+  return r?.incident ?? null;
+}
+
+export function updateIncidentStatus(id: string, status: IncidentStatus, fineAmount?: number) {
+  return run(() => api(`/api/gov/incidents/${id}/status`, { status, fineAmount }), status === 'fined' ? 'تم تسجيل المخالفة وإصدار فاتورة الغرامة' : undefined);
+}
+
+export function approveLicense(operatorId: string) {
+  return run(() => api(`/api/gov/operators/${operatorId}/approve`, {}), 'تم اعتماد الترخيص وإصدار فاتورة الرسوم');
+}
+
+export function rejectLicense(operatorId: string, reason: string) {
+  return run(() => api(`/api/gov/operators/${operatorId}/reject`, { reason }));
+}
+
+export function setOperatorStatus(operatorId: string, status: LicenseStatus) {
+  return run(() => api(`/api/gov/operators/${operatorId}/status`, { status }));
+}
+
+export function createOperator(input: {
+  name: string;
+  area: string;
+  username: string;
+  password: string;
+  site: { name: string; area: string; lat: number; lng: number; capacity: number };
+}) {
+  return run(() => api<{ operator: { id: string } }>('/api/gov/operators', input), 'تم إنشاء حساب المشغّل');
+}
+
+export function addEmployee(input: {
+  name: string;
+  nationalId: string;
+  phone: string;
+  siteId?: string;
+  username: string;
+  password: string;
+}) {
+  return run(() => api<{ employee: { id: string } }>('/api/employees', input), 'تم إنشاء حساب الموظف — بانتظار اعتماد الهيئة');
+}
+
+async function uploadDoc(ownerType: 'operator' | 'employee', ownerId: string, docKey: string, file: File) {
+  const fd = new FormData();
+  fd.append('ownerType', ownerType);
+  fd.append('ownerId', ownerId);
+  fd.append('docKey', docKey);
+  fd.append('file', file);
+  return apiForm('/api/documents/upload', fd);
+}
+
+export function uploadOperatorDoc(operatorId: string, docId: string, file: File) {
+  return run(() => uploadDoc('operator', operatorId, docId, file), 'تم رفع المستند');
+}
+
+export function uploadEmployeeDoc(employeeId: string, docId: string, file: File) {
+  return run(() => uploadDoc('employee', employeeId, docId, file), 'تم رفع المستند');
+}
+
+export function documentFileUrl(doc: Document) {
+  return doc.dbId && doc.hasFile ? `/api/documents/${doc.dbId}/file` : undefined;
+}
+
+export function reviewDocument(dbId: number, status: 'accepted' | 'rejected', note?: string) {
+  return run(() => api(`/api/gov/documents/${dbId}/review`, { status, note }));
+}
+
+export function submitOperatorForReview(_operatorId: string) {
+  return run(() => api('/api/operator/submit', {}), 'تم إرسال الطلب للهيئة');
+}
+
+export function approveEmployee(employeeId: string) {
+  return run(() => api(`/api/gov/employees/${employeeId}/approve`, {}));
+}
+
+export function rejectEmployee(employeeId: string, reason: string) {
+  return run(() => api(`/api/gov/employees/${employeeId}/reject`, { reason }));
+}
+
+export function toggleEmployee(id: string) {
+  return run(() => api(`/api/employees/${id}/toggle`, {}));
+}
+
+export function rateVisit(visitId: string, stars: number, comment?: string) {
+  return run(() => api('/api/ratings', { visitId, stars, comment }), 'شكراً لتقييمك');
+}
+
+export function fileComplaint(input: { visitId?: string; siteId?: string; category: ComplaintCategory; description: string }) {
+  return run(() => api('/api/complaints', input), 'تم إرسال الشكوى للهيئة');
+}
+
+export function updateComplaint(id: number, status: ComplaintStatus, response?: string) {
+  return run(() => api(`/api/gov/complaints/${id}`, { status, response }), 'تم تحديث الشكوى');
+}
+
+export function ackAlert(id: string) {
+  return run(() => api(`/api/gov/alerts/${encodeURIComponent(id)}/ack`, {}));
+}
+
+export function issueFine(input: { operatorId?: string; payerName?: string; amount: number; description: string }) {
+  return run(() => api('/api/gov/fines', input), 'تم إصدار فاتورة الغرامة');
+}
+
+export async function startCheckout(invoiceId: number) {
+  return api<{ ref: string; amount: number; currency: string; testMode: boolean }>(`/api/invoices/${invoiceId}/checkout`, {});
+}
+
+export async function confirmPayment(ref: string, card: { cardNumber: string; expiry: string; cvc: string; name: string }) {
+  const r = await api<{ ok: boolean; ref: string }>(`/api/payments/${ref}/confirm`, card);
+  await refresh();
+  return r;
+}
+
+export const COMPLAINT_CATEGORY_LABELS: Record<ComplaintCategory, string> = {
+  damage: 'ضرر بالسيارة',
+  delay: 'تأخير بالتسليم',
+  lost_item: 'فقدان غرض',
+  behavior: 'سوء معاملة',
+  overcharge: 'رسوم زائدة',
+  unlicensed: 'فاليه غير مرخّص',
+  other: 'أخرى',
+};
+
+export const COMPLAINT_STATUS_LABELS: Record<ComplaintStatus, string> = {
+  open: 'جديدة',
+  investigating: 'قيد المتابعة',
+  resolved: 'تمت المعالجة',
+  rejected: 'مرفوضة',
+};
+
+export const INVOICE_KIND_LABELS = {
+  license_fee: 'رسوم ترخيص',
+  fine: 'غرامة',
+  visit_fee: 'رسوم رقابة',
+} as const;
+
+export function formatJod(n: number) {
+  return `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} د.أ`;
 }

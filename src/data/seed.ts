@@ -8,7 +8,7 @@ const carThumb = (color: string, label = 'سيارة') =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="64"><rect width="96" height="64" rx="10" fill="${color}"/><text x="48" y="38" text-anchor="middle" fill="#fff" font-size="13" font-family="Arial,sans-serif">${label}</text></svg>`
   )}`;
 
-export const SEED: AppState = {
+export const SEED: Omit<AppState, 'loaded' | 'session' | 'complaints' | 'ratings' | 'invoices' | 'alerts' | 'lotRatings'> = {
   role: 'driver',
   currentEmployeeId: 'emp-1',
   currentOperatorId: 'op-1',

@@ -1,16 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { resetDemo, setRole, useStore } from '../store/useStore';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { logout, resetDemo, useRealtimeConnected, useStore } from '../store/useStore';
+import { dismissToast, useToasts } from '../lib/toast';
 import type { Role } from '../types';
 
 const ROLE_LABELS: Record<Role, string> = {
-  gov: 'حكومة',
+  gov: 'الهيئة',
   operator: 'مشغّل',
   staff: 'موظف',
   driver: 'سائق / صاحب سيارة',
 };
-
-const PORTAL_ROLES: Role[] = ['gov', 'operator', 'staff'];
 
 const NAV: Record<Role, { to: string; label: string }[]> = {
   staff: [
@@ -27,6 +25,8 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/operator/requests', label: 'طلبات السائقين' },
     { to: '/operator/employees', label: 'الموظفون' },
     { to: '/operator/license', label: 'التسجيل / الترخيص' },
+    { to: '/operator/payments', label: 'الفواتير والدفع' },
+    { to: '/operator/feedback', label: 'التقييمات والشكاوى' },
   ],
   gov: [
     { to: '/gov', label: 'الملخص' },
@@ -36,37 +36,67 @@ const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/gov/operators', label: 'المشغّلون' },
     { to: '/gov/visits', label: 'تدقيق' },
     { to: '/gov/incidents', label: 'بلاغات' },
+    { to: '/gov/complaints', label: 'الشكاوى' },
+    { to: '/gov/payments', label: 'الإيرادات' },
+    { to: '/gov/reports', label: 'التقارير' },
   ],
-  driver: [
-    { to: '/driver', label: 'المواقف' },
-    { to: '/driver/status', label: 'طلباتي' },
-    { to: '/driver/auth', label: 'تسجيل الدخول' },
-  ],
+  driver: [],
 };
+
+function Toaster() {
+  const toasts = useToasts();
+  const nav = useNavigate();
+  if (!toasts.length) return null;
+  return (
+    <div className="toaster" role="status" aria-live="polite">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`toast-item tone-${t.tone}`}
+          onClick={() => {
+            if (t.link) nav(t.link);
+            dismissToast(t.id);
+          }}
+        >
+          <strong>{t.title}</strong>
+          {t.body && <span>{t.body}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LiveDot() {
+  const live = useRealtimeConnected();
+  return (
+    <span className={`live-dot ${live ? 'on' : ''}`} title={live ? 'متصل — تحديثات فورية' : 'غير متصل'}>
+      {live ? 'مباشر' : '…'}
+    </span>
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const role = useStore((s) => s.role);
+  const session = useStore((s) => s.session);
   const pendingCount = useStore(
     (s) => s.handoffs.filter((h) => h.operatorId === s.currentOperatorId && h.status === 'pending').length
   );
+  const openComplaints = useStore((s) => s.complaints.filter((c) => c.status === 'open').length);
   const loc = useLocation();
-  const isDriver = role === 'driver';
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const nav = useNavigate();
+  const isPortalPath = /^\/(gov|operator|staff)(\/|$)/.test(loc.pathname);
+  const isDriver = !isPortalPath || role === 'driver';
 
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
-    }
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
+  async function doLogout() {
+    await logout();
+    nav(role === 'driver' ? '/driver' : '/login');
+  }
 
   return (
     <div className={`app-shell ${isDriver ? 'shell-driver' : 'shell-portal'}`}>
       {isDriver ? (
         <header className="driver-topbar">
-          <div className="brand">
+          <Link to="/driver" className="brand">
             <div className="brand-mark" aria-hidden>
               <span className="brand-mark-letter">ف</span>
             </div>
@@ -74,49 +104,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="brand-name">فاليت</span>
               <small>مواقف مرخّصة · عمّان</small>
             </div>
-          </div>
-          <div className="driver-top-actions" ref={menuRef}>
-            <Link to="/driver/auth" className="icon-chip" title="تسجيل الدخول">
-              📱
+          </Link>
+          <div className="driver-top-actions">
+            {session?.role === 'driver' && <LiveDot />}
+            <Link to="/driver/auth" className="icon-chip" title={session?.role === 'driver' ? 'حسابي' : 'تسجيل الدخول'} aria-label="حسابي">
+              {session?.role === 'driver' ? '👤' : '📱'}
             </Link>
-            <Link to="/driver/status" className="icon-chip" title="طلباتي">
+            <Link to="/driver/status" className="icon-chip" title="طلباتي" aria-label="طلباتي">
               📋
             </Link>
-            <button
-              type="button"
-              className="portal-menu-btn"
-              aria-expanded={menuOpen}
-              aria-haspopup="menu"
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              دخول الجهات
-            </button>
-            {menuOpen && (
-              <div className="portal-menu" role="menu">
-                <div className="portal-menu-title">بوابات التشغيل</div>
-                {PORTAL_ROLES.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setRole(r);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    {ROLE_LABELS[r]}
-                  </button>
-                ))}
-                <button type="button" className="portal-menu-reset" onClick={() => { resetDemo(); setMenuOpen(false); }}>
-                  إعادة البيانات التجريبية
-                </button>
-              </div>
+            {session && session.role !== 'driver' ? (
+              <Link to={`/${session.role}`} className="portal-menu-btn">
+                بوابتي
+              </Link>
+            ) : (
+              <Link to="/login" className="portal-menu-btn">
+                دخول الجهات
+              </Link>
             )}
           </div>
         </header>
       ) : (
         <header className="topbar">
-          <div className="brand">
+          <Link to={`/${role}`} className="brand">
             <div className="brand-mark" aria-hidden>
               <span className="brand-mark-letter">ف</span>
             </div>
@@ -124,34 +134,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="brand-name">فاليت</span>
               <small>هيئة تنظيم الفاليه — عمّان</small>
             </div>
-          </div>
+          </Link>
           <div className="portal-header-actions">
-            <button type="button" className="btn btn-sm portal-back" onClick={() => setRole('driver')}>
-              ← تطبيق السائق
+            <LiveDot />
+            {session && (
+              <span className="user-chip">
+                <span className={`role-chip role-${session.role}`}>{ROLE_LABELS[session.role]}</span>
+                <span className="user-name">{session.name}</span>
+              </span>
+            )}
+            <button type="button" className="btn btn-sm portal-back" onClick={() => void doLogout()}>
+              خروج
             </button>
-            <div className="role-switch" role="tablist" aria-label="تبديل الدور">
-              {(['gov', 'operator', 'staff'] as Role[]).map((r) => (
-                <button
-                  key={r}
-                  className={role === r ? 'active' : ''}
-                  onClick={() => setRole(r)}
-                  type="button"
-                  role="tab"
-                  aria-selected={role === r}
-                >
-                  {ROLE_LABELS[r].split(' ')[0]}
-                </button>
-              ))}
-            </div>
           </div>
         </header>
       )}
 
       <main className={`main ${isDriver ? 'main-driver' : ''}`}>
-        {!isDriver && (
+        {!isDriver && role === 'gov' && (
           <div className="demo-banner">
-            <span>وضع تجريبي للجهات — البيانات محفوظة محلياً على جهازك.</span>
-            <button className="btn btn-sm" type="button" onClick={resetDemo}>
+            <span>بيئة تجريبية: البيانات محفوظة على الخادم ومشتركة بين كل الحسابات.</span>
+            <button
+              className="btn btn-sm"
+              type="button"
+              onClick={() => {
+                if (confirm('إعادة كل البيانات التجريبية؟ سيتم حذف أي بيانات مضافة.')) void resetDemo();
+              }}
+            >
               إعادة البيانات
             </button>
           </div>
@@ -160,17 +169,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {!isDriver && (
           <nav className="nav-tabs" aria-label="أقسام الدور">
             {NAV[role].map((item) => {
-              const isRequests = item.to === '/operator/requests';
-              const label =
-                isRequests && pendingCount > 0
-                  ? `${item.label} (${pendingCount})`
-                  : item.label;
+              let label = item.label;
+              if (item.to === '/operator/requests' && pendingCount > 0) label = `${item.label} (${pendingCount})`;
+              if (item.to === '/gov/complaints' && openComplaints > 0) label = `${item.label} (${openComplaints})`;
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={loc.pathname === item.to ? 'active' : ''}
-                >
+                <Link key={item.to} to={item.to} className={loc.pathname === item.to ? 'active' : ''}>
                   {label}
                 </Link>
               );
@@ -186,6 +189,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <span>فاليت · منصة حكومية لتنظيم الفاليه في عمّان</span>
         </footer>
       )}
+      <Toaster />
     </div>
   );
 }

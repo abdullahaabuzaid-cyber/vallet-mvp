@@ -1,3 +1,4 @@
+import { DocReview } from '../../components/DocReview';
 import { useState } from 'react';
 import { Badge } from '../../components/Layout';
 import {
@@ -97,7 +98,7 @@ export default function Licenses() {
                       <strong>{d.name}</strong>
                       <Badge tone={toneFor(d.status)}>{DOC_STATUS_LABELS[d.status]}</Badge>
                     </div>
-                    {d.fileName && <div className="muted">📎 {d.fileName}</div>}
+                    <DocReview doc={d} />
                     {d.note && <div className="muted">{d.note}</div>}
                   </div>
                 ))}
@@ -190,7 +191,7 @@ export default function Licenses() {
                       <strong>{d.name}</strong>
                       <Badge tone={toneFor(d.status)}>{DOC_STATUS_LABELS[d.status]}</Badge>
                     </div>
-                    {d.fileName && <div className="muted">📎 {d.fileName}</div>}
+                    <DocReview doc={d} />
                   </div>
                 ))}
               </div>

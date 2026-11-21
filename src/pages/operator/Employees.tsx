@@ -4,6 +4,7 @@ import {
   addEmployee,
   DOC_STATUS_LABELS,
   docsProgress,
+  documentFileUrl,
   emptyStaffDocs,
   REVIEW_STATUS_LABELS,
   siteName,
@@ -31,12 +32,18 @@ export default function Employees() {
   const [nid, setNid] = useState('');
   const [phone, setPhone] = useState('');
   const [siteId, setSiteId] = useState(op?.sites[0]?.id || '');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [docs, setDocs] = useState<Document[]>(() => emptyStaffDocs());
+  const [files, setFiles] = useState<Record<string, File>>({});
+  const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   if (!op) return <div className="card empty">لا بيانات</div>;
 
-  function markUpload(docId: string, fileName: string) {
+  function markUpload(docId: string, file: File) {
+    const fileName = file.name;
+    setFiles((prev) => ({ ...prev, [docId]: file }));
     setDocs((prev) =>
       prev.map((d) =>
         d.id === docId
@@ -46,16 +53,24 @@ export default function Employees() {
     );
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const prog = docsProgress(docs);
-    if (!prog.complete) return;
-    addEmployee({ name, nationalId: nid, phone, siteId, docs });
-    setName('');
-    setNid('');
-    setPhone('');
-    setDocs(emptyStaffDocs());
-    setOpen(false);
+    if (!prog.complete || busy) return;
+    setBusy(true);
+    const r = await addEmployee({ name, nationalId: nid, phone, siteId, username, password });
+    if (r) {
+      for (const [docId, f] of Object.entries(files)) await uploadEmployeeDoc(r.employee.id, docId, f);
+      setName('');
+      setNid('');
+      setPhone('');
+      setUsername('');
+      setPassword('');
+      setDocs(emptyStaffDocs());
+      setFiles({});
+      setOpen(false);
+    }
+    setBusy(false);
   }
 
   const formProgress = docsProgress(docs);
@@ -80,6 +95,8 @@ export default function Employees() {
             <div className="field"><label>الاسم</label><input value={name} onChange={(e) => setName(e.target.value)} required /></div>
             <div className="field"><label>الرقم الوطني</label><input value={nid} onChange={(e) => setNid(e.target.value)} required /></div>
             <div className="field"><label>الهاتف</label><input value={phone} onChange={(e) => setPhone(e.target.value)} required /></div>
+            <div className="field"><label>اسم المستخدم (للدخول)</label><input value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} required dir="ltr" autoComplete="off" placeholder="e.g. sami" /></div>
+            <div className="field"><label>كلمة المرور (8 أحرف على الأقل)</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} dir="ltr" autoComplete="new-password" /></div>
             <div className="field">
               <label>الموقع</label>
               <select value={siteId} onChange={(e) => setSiteId(e.target.value)}>
@@ -106,7 +123,7 @@ export default function Employees() {
                       hidden
                       onChange={(e) => {
                         const f = e.target.files?.[0];
-                        if (f) markUpload(d.id, f.name);
+                        if (f) markUpload(d.id, f);
                         e.target.value = '';
                       }}
                     />
@@ -114,8 +131,8 @@ export default function Employees() {
                 </div>
               ))}
             </div>
-            <button className="btn btn-primary" type="submit" disabled={!formProgress.complete} style={{ marginTop: 12 }}>
-              إرسال لاعتماد الحكومة
+            <button className="btn btn-primary" type="submit" disabled={!formProgress.complete || busy} style={{ marginTop: 12 }}>
+              {busy ? 'جارٍ الإنشاء والرفع…' : 'إنشاء الحساب وإرسال لاعتماد الحكومة'}
             </button>
           </form>
         )}
@@ -139,6 +156,7 @@ export default function Employees() {
                     <td>
                       <strong>{e.name}</strong>
                       <div className="muted">{e.nationalId}</div>
+                      {e.username && <div className="muted" dir="ltr" style={{ textAlign: 'right' }}>👤 {e.username}</div>}
                       <div className="muted">{e.siteId ? siteName(e.siteId) : '—'}</div>
                     </td>
                     <td>
@@ -176,7 +194,17 @@ export default function Employees() {
                                 <strong>{d.name}</strong>
                                 <Badge tone={toneFor(d.status)}>{DOC_STATUS_LABELS[d.status]}</Badge>
                               </div>
-                              {d.fileName && <div className="muted">📎 {d.fileName}</div>}
+                              {d.fileName && (
+                                <div className="muted">
+                                  📎{' '}
+                                  {documentFileUrl(d) ? (
+                                    <a href={documentFileUrl(d)} target="_blank" rel="noreferrer">{d.fileName}</a>
+                                  ) : (
+                                    d.fileName
+                                  )}
+                                </div>
+                              )}
+                              {d.note && <div className="muted">{d.note}</div>}
                               <label className="btn btn-sm upload-btn" style={{ marginTop: 6 }}>
                                 رفع / تحديث
                                 <input
@@ -185,7 +213,7 @@ export default function Employees() {
                                   hidden
                                   onChange={(ev) => {
                                     const f = ev.target.files?.[0];
-                                    if (f) uploadEmployeeDoc(e.id, d.id, f.name);
+                                    if (f) void uploadEmployeeDoc(e.id, d.id, f);
                                     ev.target.value = '';
                                   }}
                                 />

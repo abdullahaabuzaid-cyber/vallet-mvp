@@ -16,11 +16,6 @@ type GeoState =
   | { status: 'ok'; lat: number; lng: number; source: 'gps' | 'demo' }
   | { status: 'error'; lat: number; lng: number; source: 'demo'; reason: string };
 
-function demoRating(siteId: string) {
-  let h = 0;
-  for (let i = 0; i < siteId.length; i++) h = (h + siteId.charCodeAt(i) * 17) % 40;
-  return (4.6 + h / 100).toFixed(1);
-}
 
 function formatDist(km: number) {
   if (km < 1) return `${Math.round(km * 1000)} م`;
@@ -28,6 +23,7 @@ function formatDist(km: number) {
 }
 
 export default function DriverHome() {
+  const lotRatings = useStore((st) => st.lotRatings);
   const handoffs = useStore((s) => s.handoffs);
   const driverAuth = useStore((s) => s.driverAuth);
   const [geo, setGeo] = useState<GeoState>({ status: 'loading' });
@@ -101,11 +97,12 @@ export default function DriverHome() {
     ? handoffs.find((h) => h.id === submittedId)
     : pending || activeAccepted;
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!driverAuth?.verified) return;
     if (!selectedSiteId || !plate.trim()) return;
-    const h = createHandoff(selectedSiteId, plate);
+    const h = await createHandoff(selectedSiteId, plate);
+    if (!h) return;
     setSubmittedId(h.id);
     setPlate('');
     setSelectedSiteId(null);
@@ -186,7 +183,7 @@ export default function DriverHome() {
 
         <div className="lot-sheet-list">
           {filtered.map((lot, idx) => {
-            const rating = demoRating(lot.siteId);
+            const rating = lotRatings[lot.siteId];
             const selectedCls = selectedSiteId === lot.siteId ? 'selected' : '';
             return (
               <article key={lot.siteId} className={`lot-sheet-card ${selectedCls}`}>
@@ -204,7 +201,11 @@ export default function DriverHome() {
                     </div>
                     <div className="lot-sheet-badges">
                       <span className="pill-licensed">✓ مرخّص</span>
-                      <span className="pill-rating">★ {rating}</span>
+                      {rating ? (
+                        <span className="pill-rating" title={`${rating.count} تقييم`}>★ {rating.avg.toFixed(1)} ({rating.count})</span>
+                      ) : (
+                        <span className="pill-muted">جديد</span>
+                      )}
                       {lot.licenseNo && <span className="pill-muted">{lot.licenseNo}</span>}
                     </div>
                   </div>
@@ -310,7 +311,7 @@ function HandoffStatusCard({ handoffId, onNew }: { handoffId: string; onNew: () 
 
           {pending && (
             <p className="tracking-hint">
-              بانتظار قبول المشغّل… من قائمة «دخول الجهات» افتح بوابة المشغّل لقبول الطلب في العرض التجريبي.
+              بانتظار قبول المشغّل… رح توصلك الحالة هون مباشرة أول ما يقبل الطلب.
             </p>
           )}
 
@@ -337,6 +338,8 @@ function HandoffStatusCard({ handoffId, onNew }: { handoffId: string; onNew: () 
               <div style={{ marginTop: 8 }}>
                 {visit?.checkOutAt ? (
                   <Badge tone="ok">تم الخروج · {formatDateTime(visit.checkOutAt)}</Badge>
+                ) : visit?.readyAt ? (
+                  <Badge tone="ok">سيارتك جاهزة عند المدخل 🚗</Badge>
                 ) : (
                   <Badge tone="info">السيارة لا تزال في الموقف</Badge>
                 )}
