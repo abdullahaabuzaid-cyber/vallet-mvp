@@ -83,9 +83,10 @@ export async function seed(force = false) {
       const empId = 'employeeId' in a ? a.employeeId : null;
       const empOp = empId ? DEMO_DATA.employees.find((e: { id: string; operatorId: string }) => e.id === empId)?.operatorId ?? null : null;
       const name = a.role === 'gov' ? 'مدير الهيئة' : a.label.split(' — ')[0];
+      const authority = a.role === 'gov' || a.role === 'inspector' ? 'auth-amman' : null;
       await c.query(
         `insert into users (role, username, password_hash, name, operator_id, employee_id, authority_id) values ($1,$2,$3,$4,$5,$6,$7)`,
-        [a.role, a.username, hash(a.password), name, opId ?? empOp, empId, a.role === 'gov' ? 'auth-amman' : null]
+        [a.role, a.username, hash(a.password), name, opId ?? empOp, empId, authority]
       );
     }
     for (const d of DEMO_DRIVERS) {

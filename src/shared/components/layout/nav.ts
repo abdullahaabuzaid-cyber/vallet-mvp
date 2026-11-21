@@ -6,6 +6,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   operator: 'مشغّل',
   staff: 'موظف',
   driver: 'سائق / صاحب سيارة',
+  inspector: 'مفتش ميداني',
 };
 
 /** Portal tabs per role (drivers use the top bar only). */
@@ -43,14 +44,17 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/gov/public-reports', label: 'بلاغات الجمهور' },
     { to: '/gov/complaints', label: 'الشكاوى' },
     { to: '/gov/payments', label: 'الإيرادات' },
+    { to: '/gov/field-fines', label: 'المخالفات الميدانية' },
+    { to: '/gov/integrations', label: 'الربط الحكومي' },
     { to: '/gov/reports', label: 'التقارير' },
   ],
   driver: [],
+  inspector: [{ to: '/inspector', label: 'المهام والمخالفات' }],
 };
 
 /** Icon per route segment (sidebar + page heading). */
 export const NAV_ICONS: Record<string, IconName> = {
   alerts: 'bell', map: 'map', licenses: 'shield', operators: 'users', visits: 'car', incidents: 'shield',
   complaints: 'message', payments: 'wallet', reports: 'chart', requests: 'bell', employees: 'users',
-  license: 'file', feedback: 'message', scan: 'scan', checkin: 'arrow', checkout: 'arrow', cars: 'car', incident: 'shield', condition: 'scan', bookings: 'clock', shifts: 'users', pricing: 'wallet', contracts: 'file', 'public-reports': 'pin',
+  license: 'file', feedback: 'message', scan: 'scan', checkin: 'arrow', checkout: 'arrow', cars: 'car', incident: 'shield', condition: 'scan', bookings: 'clock', 'field-fines': 'shield', integrations: 'spark', shifts: 'users', pricing: 'wallet', contracts: 'file', 'public-reports': 'pin',
 };

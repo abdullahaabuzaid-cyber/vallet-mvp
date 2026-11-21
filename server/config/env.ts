@@ -16,6 +16,13 @@ export const env = {
   buildId: process.env.RAILWAY_DEPLOYMENT_ID || String(Date.now()),
   licenseFeeJod: Number(process.env.LICENSE_FEE_JOD || 500),
   fineDefaultJod: Number(process.env.FINE_DEFAULT_JOD || 1000),
+  /** External integrations: unset URL → clearly labelled stub provider. */
+  integrations: {
+    vehicleUrl: process.env.VEHICLE_REGISTRY_URL || '',
+    vehicleToken: process.env.VEHICLE_REGISTRY_TOKEN || '',
+    municipalityUrl: process.env.MUNICIPALITY_API_URL || '',
+    municipalityToken: process.env.MUNICIPALITY_API_TOKEN || '',
+  },
   sms: {
     provider: (process.env.SMS_PROVIDER || '').toLowerCase(),
     twilioSid: process.env.TWILIO_ACCOUNT_SID,

@@ -35,3 +35,13 @@ details>summary { cursor:pointer;color:var(--primary);padding:10px 0; }
 .capacity-tile.is-near { border-color:#f0a92b;background:#fffaf0; } .capacity-tile.is-full { border-color:#e05252;background:#fff5f5; }
 .capacity-tile.is-full .bar-fill { background:linear-gradient(90deg,#e05252,#f08a8a); } .capacity-tile.is-near .bar-fill { background:linear-gradient(90deg,#f0a92b,#f7c669); }
 .capacity-count { font-size:1.1rem; } .capacity-count b { font-size:1.6rem; }
+
+.role-chip.role-inspector { background:#fff1e0;color:#9a4a00; }
+.role-inspector .page-header { display:none; }
+.heat-legend { display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);padding:8px 12px; }
+.heat-legend i { width:60px;height:8px;border-radius:99px;background:linear-gradient(90deg,#fde68a,#f97316,#dc2626); }
+.integration-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px; }
+.stub-badge { background:#fff1e0;color:#9a4a00;border:1px dashed #f0a92b;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700; }
+.live-badge { background:#e5f7ee;color:#0d6b3c;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700; }
+.lookup-result { background:var(--surface-2);border-radius:12px;padding:12px;display:grid;gap:4px; }
+.inspector-tabs { position:sticky;top:64px;z-index:5; }

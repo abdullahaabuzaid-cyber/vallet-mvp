@@ -14,7 +14,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const loc = useLocation();
   const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
-  const isDriver = !/^\/(gov|operator|staff)(\/|$)/.test(loc.pathname) || role === 'driver';
+  const isDriver = !/^\/(gov|operator|staff|inspector)(\/|$)/.test(loc.pathname) || role === 'driver';
   async function doLogout() {
     await logout();
     navigate(role === 'driver' ? '/driver' : '/login');

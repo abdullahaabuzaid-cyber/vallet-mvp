@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
+import { HeatLayer, type HeatCell } from '@/shared/components/map/HeatLayer';
+import { useResource } from '@/shared/hooks/useResource';
+import { filterQuery } from '@/shared/hooks/useFilters';
 import { FilterBar, type FilterField } from '@/shared/components/ui/filters';
-import { searchField, statusField } from '@/shared/components/ui/filters/fields';
+import { dateField, searchField, statusField } from '@/shared/components/ui/filters/fields';
 import { StatCard } from '@/shared/components/ui/StatCard';
 import { LotsMap } from '@/shared/components/map/LotsMap';
 import { LICENSE_STATUS_LABELS } from '@/shared/constants/labels';
@@ -21,8 +24,12 @@ export default function MapPage() {
     statusField(LICENSE_STATUS_LABELS),
     ...useFilterFields({ operators: true }),
     { type: 'select', key: 'kind', label: 'بلاغات غير مرخّصة', options: [{ value: 'hide', label: 'إخفاء' }], allLabel: 'إظهار' },
+    { type: 'select', key: 'severity', label: 'خريطة حرارية', options: [{ value: 'demand', label: 'الطلب (زيارات + حجوزات)' }, { value: 'violations', label: 'المخالفات والبلاغات' }], allLabel: 'بدون' },
+    dateField,
   ];
   const shown = filterList(lots, filters.values, (l) => ({ text: `${l.siteName} ${l.area} ${l.operatorName}`, status: l.status, operatorId: l.operatorId }));
+  const layer = filters.values.severity;
+  const heat = useResource<{ max: number; cells: HeatCell[] }>(`/api/gov/heatmap?layer=${layer || 'demand'}&${filterQuery({ ...filters.values, q: '', status: '', operatorId: '' }, 500)}`, { max: 1, cells: [] });
   const pins = filters.values.kind === 'hide' ? [] : unlicensed;
   const count = (st: string) => lots.filter((l) => l.status === st).length;
   return (
@@ -35,7 +42,8 @@ export default function MapPage() {
       </div>
       <FilterBar fields={fields} filters={filters} count={shown.length} total={lots.length} />
       <div className="card map-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <LotsMap mode="gov" lots={shown} unlicensed={pins} />
+        <LotsMap mode="gov" lots={shown} unlicensed={pins}>{layer && <HeatLayer cells={heat.data.cells} max={heat.data.max} label={layer === 'violations' ? 'مخالفات/بلاغات' : 'طلب'} />}</LotsMap>
+        {layer && <div className="heat-legend" data-testid="heat-legend"><span>منخفض</span><i /><span>مرتفع</span><span>· {heat.data.cells.length} منطقة</span></div>}
       </div>
     </>
   );

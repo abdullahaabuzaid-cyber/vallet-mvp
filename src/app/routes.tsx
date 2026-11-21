@@ -1,3 +1,6 @@
+import InspectorPage from '@/features/inspector/pages/InspectorPage';
+import GovIntegrationsPage from '@/features/gov/pages/IntegrationsPage';
+import GovFieldFinesPage from '@/features/gov/pages/FieldFinesPage';
 import OperatorPricingPage from '@/features/operator/pages/PricingPage';
 import OperatorShiftsPage from '@/features/operator/pages/ShiftsPage';
 import OperatorContractsPage from '@/features/operator/pages/ContractsPage';
@@ -63,8 +66,11 @@ const PORTAL: Record<PortalRole, PortalRoute[]> = {
     { path: '/operator/payments', element: <OperatorPaymentsPage /> },
     { path: '/operator/feedback', element: <OperatorFeedbackPage /> },
   ],
+  inspector: [{ path: '/inspector', element: <InspectorPage /> }],
   gov: [
     { path: '/gov/public-reports', element: <PublicReportsPage /> },
+    { path: '/gov/integrations', element: <GovIntegrationsPage /> },
+    { path: '/gov/field-fines', element: <GovFieldFinesPage /> },
     { path: '/gov', element: <GovSummaryPage /> },
     { path: '/gov/licenses', element: <GovLicenseReviewPage /> },
     { path: '/gov/operators', element: <GovOperatorsPage /> },

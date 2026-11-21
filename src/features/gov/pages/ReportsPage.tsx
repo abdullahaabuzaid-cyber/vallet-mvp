@@ -1,3 +1,4 @@
+import { TaxReportCard } from '@/features/reports/TaxReportCard';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FilterBar, type FilterField } from '@/shared/components/ui/filters';
@@ -166,7 +167,8 @@ export default function ReportsPage() {
               </table>
             </div>
           </div>
-        </>
+          <TaxReportCard />
+    </>
       )}
     </div>
   );

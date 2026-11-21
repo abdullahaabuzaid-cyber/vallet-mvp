@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '@/shared/lib/api';
 import { login, useStore } from '@/store';
 
-type DemoAccount = { role: 'gov' | 'operator' | 'staff'; username: string; password: string; label: string };
-const ROLE_LABEL = { gov: 'الهيئة', operator: 'مشغّل', staff: 'موظف' } as const;
-const ROLE_HOME = { gov: '/gov', operator: '/operator', staff: '/staff', driver: '/driver' } as const;
+type DemoAccount = { role: 'gov' | 'operator' | 'staff' | 'inspector'; username: string; password: string; label: string };
+const ROLE_LABEL = { gov: 'الهيئة', operator: 'مشغّل', staff: 'موظف', inspector: 'مفتش ميداني' } as const;
+const ROLE_HOME = { gov: '/gov', operator: '/operator', staff: '/staff', inspector: '/inspector', driver: '/driver' } as const;
 
 export default function LoginPage() {
   const session = useStore((s) => s.session);

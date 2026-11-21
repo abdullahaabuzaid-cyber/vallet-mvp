@@ -1,12 +1,14 @@
 /** Demo logins shown on /login (data is illustrative; reset from the gov portal). */
 export const DEMO_PASSWORDS = {
   gov: 'Gov@2026',
+  inspector: 'Inspector@2026',
   operator: 'Operator@2026',
   staff: 'Staff@2026',
 };
 
 export const DEMO_ACCOUNTS = [
   { role: 'gov', username: 'admin', password: DEMO_PASSWORDS.gov, label: 'هيئة تنظيم الفاليه (مدير)' },
+  { role: 'inspector', username: 'inspector', password: DEMO_PASSWORDS.inspector, label: 'سامر حداد — مفتش ميداني (الهيئة)' },
   { role: 'operator', username: 'elite', password: DEMO_PASSWORDS.operator, label: 'فاليه النخبة — مرخّص', operatorId: 'op-1' },
   { role: 'operator', username: 'saffni', password: DEMO_PASSWORDS.operator, label: 'صفّني — مرخّص', operatorId: 'op-5' },
   { role: 'operator', username: 'fastline', password: DEMO_PASSWORDS.operator, label: 'الصف السريع — قيد المراجعة', operatorId: 'op-2' },

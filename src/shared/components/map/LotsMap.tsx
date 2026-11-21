@@ -121,6 +121,8 @@ type GovProps = {
   mode: 'gov';
   lots: MapLot[];
   unlicensed?: UnlicensedPin[];
+  /** Extra Leaflet layers (e.g. heatmap). */
+  children?: React.ReactNode;
 };
 
 export type LotsMapProps = DriverProps | GovProps;
@@ -227,6 +229,7 @@ export function LotsMap(props: LotsMapProps) {
             </Popup>
           </Marker>
         ))}
+        {props.mode === 'gov' && props.children}
       </MapContainer>
 
       {props.mode === 'gov' && (

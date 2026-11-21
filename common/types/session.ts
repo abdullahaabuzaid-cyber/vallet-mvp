@@ -1,4 +1,4 @@
-export type Role = 'gov' | 'operator' | 'staff' | 'driver';
+export type Role = 'gov' | 'operator' | 'staff' | 'driver' | 'inspector';
 
 export type SessionInfo = {
   id: number;

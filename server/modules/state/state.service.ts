@@ -58,6 +58,11 @@ export async function buildState(user?: SessionUser) {
     return base;
   }
 
+  if (role === 'inspector') {
+    base.operators = await operatorsWith('', [], false);
+    return base;
+  }
+
   // operator / staff
   const opId = user!.operatorId!;
   base.operators = await operatorsWith(`where id = $1`, [opId], role === 'operator');

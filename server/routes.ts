@@ -1,4 +1,7 @@
 import { Router } from 'express';
+import { inspectorRouter } from './modules/inspector/inspector.routes.ts';
+import { integrationsRouter } from './modules/integrations/integrations.routes.ts';
+import { heatmapGovRouter } from './modules/heatmap/heatmap.routes.ts';
 import { pricingRouter } from './modules/pricing/pricing.routes.ts';
 import { capacityRouter } from './modules/capacity/capacity.routes.ts';
 import { shiftsRouter } from './modules/shifts/shifts.routes.ts';
@@ -31,7 +34,7 @@ import { visitsRouter } from './modules/visits/visits.routes.ts';
 export const apiRouter = Router();
 apiRouter.use(
   conditionRouter, arrivalRouter, publicReportsRouter, walletRouter, bookingsRouter,
-  pricingRouter, capacityRouter, shiftsRouter, contractsRouter,
+  pricingRouter, capacityRouter, shiftsRouter, contractsRouter, inspectorRouter, integrationsRouter,
   demoRouter, stateRouter, realtimeRouter, authRouter,
   handoffsRouter, visitsRouter, ratingsRouter, complaintsRouter, incidentsRouter,
   operatorsRouter, staffRouter, documentsRouter, licensesRouter, paymentsRouter,
@@ -42,7 +45,7 @@ const govRouter = Router();
 govRouter.use(requireRole('gov'));
 govRouter.use(
   operatorsGovRouter, licensesGovRouter, staffGovRouter, documentsGovRouter, incidentsGovRouter,
-  paymentsGovRouter, complaintsGovRouter, alertsGovRouter, reportsGovRouter, demoGovRouter,
+  paymentsGovRouter, complaintsGovRouter, alertsGovRouter, reportsGovRouter, demoGovRouter, heatmapGovRouter,
 );
 apiRouter.use('/gov', govRouter);
 

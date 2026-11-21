@@ -20,6 +20,8 @@ const SUBTITLES: Record<string, string> = {
   shifts: 'جدولة الفريق وقياس الأداء لكل موظف بالاسم.',
   pricing: 'أسعار حسب الموقف ووقت الذروة — تُطبّق تلقائياً عند الاستلام.',
   contracts: 'عقود المطاعم والفنادق والمولات وفوترتها الشهرية.',
+  'field-fines': 'مخالفات المفتشين الميدانيين بالصورة والموقع والفاتورة.',
+  integrations: 'ربط ترخيص المركبات والأمانة — يعمل بوضع تجريبي حتى تتوفر واجهات رسمية.',
   bookings: 'حجوزات السائقين المسبقة لكل موقف، مرتّبة حسب الموعد.',
   condition: 'أدلة مصوّرة بوقت الخادم عند الاستلام والتسليم.',
   'public-reports': 'بلاغات المواطنين بالصورة والموقع حتى المخالفة والإغلاق.',
@@ -30,5 +32,5 @@ export function PortalPageHeading() {
   const role = useStore((s) => s.role);
   const title = NAV[role].find((n) => n.to === loc.pathname)?.label || 'لوحة التحكم';
   const key = loc.pathname.split('/')[2] || loc.pathname;
-  return <PageHeader title={!loc.pathname.split('/')[2] ? (role === 'gov' ? 'نظرة عامة' : role === 'operator' ? 'لوحة التشغيل' : 'مساحة الموظف') : title} icon={NAV_ICONS[key] ?? 'grid'} subtitle={SUBTITLES[key] || 'تفاصيل منظّمة، تجربة أسهل، وحقوق محفوظة.'} eyebrow={`فاليت / ${ROLE_LABELS[role]}`}><span className="date-pill">{new Date().toLocaleDateString('ar-JO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Amman' })}</span><span className="demo-pill">بيئة تجريبية</span>{role === 'gov' && <button className="btn btn-sm" type="button" onClick={() => { if (confirm('إعادة كل البيانات التجريبية؟ سيتم حذف أي بيانات مضافة.')) void resetDemo(); }}>إعادة البيانات</button>}</PageHeader>;
+  return <PageHeader title={!loc.pathname.split('/')[2] ? (role === 'gov' ? 'نظرة عامة' : role === 'operator' ? 'لوحة التشغيل' : role === 'inspector' ? 'المهام الميدانية' : 'مساحة الموظف') : title} icon={NAV_ICONS[key] ?? 'grid'} subtitle={SUBTITLES[key] || 'تفاصيل منظّمة، تجربة أسهل، وحقوق محفوظة.'} eyebrow={`فاليت / ${ROLE_LABELS[role]}`}><span className="date-pill">{new Date().toLocaleDateString('ar-JO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Amman' })}</span><span className="demo-pill">بيئة تجريبية</span>{role === 'gov' && <button className="btn btn-sm" type="button" onClick={() => { if (confirm('إعادة كل البيانات التجريبية؟ سيتم حذف أي بيانات مضافة.')) void resetDemo(); }}>إعادة البيانات</button>}</PageHeader>;
 }
