@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { requireRole } from '../../middleware/auth.ts';
+import { str } from '../../utils/http.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { createBooking, listBookings, myBookings, setBookingStatus } from './bookings.service.ts';
+export const bookingsRouter = Router();
+bookingsRouter.post('/bookings', requireRole('driver'), async (req, res) => res.json(await createBooking(req.user!, req.body)));
+bookingsRouter.get('/bookings/mine', requireRole('driver'), async (req, res) => res.json({ items: await myBookings(req.user!) }));
+bookingsRouter.get('/bookings', requireRole('operator', 'staff', 'gov'), async (req, res) => res.json(await listBookings(req.user!, listParams(req))));
+bookingsRouter.post('/bookings/:id/status', requireRole('driver', 'operator', 'staff'), async (req, res) => res.json(await setBookingStatus(req.user!, Number(req.params.id), str(req.body?.status, 20))));

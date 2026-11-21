@@ -21,6 +21,7 @@ export function DriverHeader() {
         <Link to="/driver/auth" className="icon-chip" title={session?.role === 'driver' ? 'حسابي' : 'تسجيل الدخول'} aria-label="حسابي">
           {session?.role === 'driver' ? '👤' : '📱'}
         </Link>
+        {session?.role === 'driver' && <details className="driver-account-menu"><summary className="icon-chip" aria-label="خدماتي">☰</summary><nav><Link to="/driver/book">حجز مسبق</Link><Link to="/driver/wallet">المحفظة والاشتراك</Link><Link to="/report">بلاغ عام</Link></nav></details>}
         <Link to="/driver/status" className="icon-chip" title="طلباتي" aria-label="طلباتي">
           📋
         </Link>

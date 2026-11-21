@@ -26,7 +26,9 @@ export interface AppState {
   incidents: Incident[];
   handoffs: HandoffRequest[];
   driverAuth: DriverAuth | null;
+  /** ms timestamp of the last /api/state load (version for side lists). */
+  syncedAt: number;
 }
 
 /** Shape returned by GET /api/state. */
-export type ServerState = Omit<AppState, 'loaded' | 'role' | 'currentEmployeeId' | 'currentOperatorId' | 'driverAuth'>;
+export type ServerState = Omit<AppState, 'loaded' | 'role' | 'currentEmployeeId' | 'currentOperatorId' | 'driverAuth' | 'syncedAt'>;

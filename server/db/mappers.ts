@@ -60,7 +60,7 @@ export function mapComplaint(c: any) {
 export function mapRating(r: any) {
   return {
     id: r.id, visitId: und(r.visit_id), operatorId: und(r.operator_id), siteId: und(r.site_id), stars: r.stars, comment: und(r.comment),
-    createdAt: iso(r.created_at)!, driverPhone: und(r.driver_phone),
+    createdAt: iso(r.created_at)!, driverPhone: und(r.driver_phone), employeeId: und(r.employee_id),
   };
 }
 

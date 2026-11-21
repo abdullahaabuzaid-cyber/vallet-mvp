@@ -21,6 +21,7 @@ const EMPTY: AppState = {
   alerts: [],
   lotRatings: {},
   driverAuth: null,
+  syncedAt: 0,
 };
 
 let state: AppState = EMPTY;
@@ -82,6 +83,7 @@ function applyServer(d: ServerState) {
     ...state,
     ...d,
     loaded: true,
+    syncedAt: Date.now(),
     role: sess?.role ?? 'driver',
     currentEmployeeId: sess?.employeeId ?? '',
     currentOperatorId: sess?.operatorId ?? '',

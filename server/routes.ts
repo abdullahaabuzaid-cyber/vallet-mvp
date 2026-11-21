@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { walletRouter } from './modules/wallet/wallet.routes.ts';
+import { bookingsRouter } from './modules/bookings/bookings.routes.ts';
 import { conditionRouter } from './modules/condition/condition.routes.ts';
 import { arrivalRouter } from './modules/arrival/arrival.routes.ts';
 import { publicReportsRouter } from './modules/publicReports/publicReports.routes.ts';
@@ -24,7 +26,7 @@ import { visitsRouter } from './modules/visits/visits.routes.ts';
 /** Everything under /api. Each module guards its own routes by role. */
 export const apiRouter = Router();
 apiRouter.use(
-  conditionRouter, arrivalRouter, publicReportsRouter,
+  conditionRouter, arrivalRouter, publicReportsRouter, walletRouter, bookingsRouter,
   demoRouter, stateRouter, realtimeRouter, authRouter,
   handoffsRouter, visitsRouter, ratingsRouter, complaintsRouter, incidentsRouter,
   operatorsRouter, staffRouter, documentsRouter, licensesRouter, paymentsRouter,

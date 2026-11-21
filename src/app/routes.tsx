@@ -1,3 +1,6 @@
+import WalletPage from '@/features/driver/pages/WalletPage';
+import BookingPage from '@/features/driver/pages/BookingPage';
+import OperatorBookingsPage from '@/features/operator/pages/BookingsPage';
 import ConditionPage from '@/features/staff/pages/ConditionPage';
 import PublicReportPage from '@/features/driver/pages/PublicReportPage';
 import PublicReportsPage from '@/features/gov/pages/PublicReportsPage';
@@ -47,6 +50,7 @@ const PORTAL: Record<PortalRole, PortalRoute[]> = {
   operator: [
     { path: '/operator', element: <OperatorDashboardPage /> },
     { path: '/operator/requests', element: <OperatorRequestsPage /> },
+    { path: '/operator/bookings', element: <OperatorBookingsPage /> },
     { path: '/operator/employees', element: <OperatorEmployeesPage /> },
     { path: '/operator/visits', element: <OperatorCarLogPage /> },
     { path: '/operator/license', element: <OperatorLicensePage /> },
@@ -76,6 +80,8 @@ export function AppRoutes() {
       {(Object.keys(PORTAL) as PortalRole[]).flatMap((role) =>
         PORTAL[role].map((r) => <Route key={r.path} path={r.path} element={<Guard role={role}>{r.element}</Guard>} />)
       )}
+      <Route path="/driver/wallet" element={<WalletPage />} />
+      <Route path="/driver/book" element={<BookingPage />} />
       <Route path="/report" element={<PublicReportPage />} />
       <Route path="/driver" element={<DriverHomePage />} />
       <Route path="/driver/status" element={<DriverStatusPage />} />

@@ -24,4 +24,6 @@ export interface Rating {
   comment?: string;
   createdAt: string;
   driverPhone?: string;
+  /** Staff member rated by name (who handed the car back). */
+  employeeId?: string;
 }

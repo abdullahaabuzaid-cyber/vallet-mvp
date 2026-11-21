@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { requireRole } from '../../middleware/auth.ts';
+import { str } from '../../utils/http.ts';
+import { subscribe, tip, topUp, wallet } from './wallet.service.ts';
+export const walletRouter = Router();
+walletRouter.use('/wallet', requireRole('driver'));
+walletRouter.get('/wallet', async (req, res) => res.json(await wallet(req.user!)));
+walletRouter.post('/wallet/topup', async (req, res) => res.json(await topUp(req.user!, req.body)));
+walletRouter.post('/wallet/subscribe', async (req, res) => res.json(await subscribe(req.user!, str(req.body?.plan, 20))));
+walletRouter.post('/wallet/tip', async (req, res) => res.json(await tip(req.user!, str(req.body?.visitId, 40), req.body?.amount)));
