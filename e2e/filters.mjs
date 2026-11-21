@@ -12,8 +12,8 @@ export async function filterChecks({ BASE, gov, op, plate, ok, settle }) {
   await settle(gov.p);
   ok('filter: state persists in URL after reload', (await gov.p.getByTestId('filter-search').inputValue()) === plate.replace('-', ''));
   await gov.p.getByTestId('filter-clear').click();
-  await gov.p.waitForTimeout(500);
-  ok('filter: clear-all resets URL and results', !new URL(gov.p.url()).searchParams.get('q') && (await gov.p.getByTestId('visit-row').count()) > rowTexts.length);
+  const grew = await gov.p.waitForFunction((n) => document.querySelectorAll('[data-testid=visit-row]').length > n, rowTexts.length, { timeout: 8000 }).then(() => true).catch(() => false);
+  ok('filter: clear-all resets URL and results', !new URL(gov.p.url()).searchParams.get('q') && grew);
   const delivered = await (await gov.c.request.get(`${BASE}/api/visits?status=delivered&limit=100`)).json();
   ok('filter: server status filter returns only delivered visits', delivered.total > 0 && delivered.items.every((v) => !!v.checkOutAt));
   const scoped = await (await op.c.request.get(`${BASE}/api/visits?operatorId=op-2&limit=500`)).json();

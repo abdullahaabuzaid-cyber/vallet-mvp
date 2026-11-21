@@ -189,7 +189,15 @@ try {
   await op.p.goto(`${BASE}/operator/payments`);
   await settle(op.p);
   await shot(op.p, 'operator-payments');
-  const payBtn = op.p.getByRole('button', { name: 'ادفع الآن' }).first();
+  let payBtn = op.p.getByRole('button', { name: 'ادفع الآن' }).first();
+  if (!(await payBtn.count())) {
+    // all invoices already paid (e.g. repeated live runs): gov issues a small test fine first
+    await gov.c.request.post(`${BASE}/api/gov/fines`, { data: { operatorId: 'op-1', amount: 1, description: 'غرامة اختبار (e2e)' } });
+    await op.p.reload();
+    await settle(op.p);
+    payBtn = op.p.getByRole('button', { name: 'ادفع الآن' }).first();
+    await payBtn.waitFor({ timeout: 5000 }).catch(() => undefined);
+  }
   if (await payBtn.count()) {
     await payBtn.click();
     await op.p.waitForSelector('.pay-modal');
