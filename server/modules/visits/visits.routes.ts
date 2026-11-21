@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireCompleteEvidence } from '../condition/condition.guard.ts';
 import { q1 } from '../../db/pool.ts';
 import { mapVisit } from '../../db/mappers.ts';
 import { requireRole } from '../../middleware/auth.ts';
@@ -34,6 +35,7 @@ visitsRouter.post('/visits/checkin', requireRole('staff'), async (req, res) => {
 visitsRouter.post('/visits/:id/checkout', requireRole('staff', 'operator'), async (req, res) => {
   const v = await staffVisit(req);
   if (v.check_out_at) throw bad('تم تسجيل الخروج مسبقاً');
+  await requireCompleteEvidence(v.id);
   const by = req.user!.employeeId || v.check_in_by;
   const r = await q1(`update visits set check_out_at = now(), check_out_by = $2 where id=$1 returning *`, [v.id, by]);
   notifyOperator(v.operator_id, { type: 'visit_out', title: 'خروج سيارة', body: `${v.plate} — ${v.receipt_no}` });

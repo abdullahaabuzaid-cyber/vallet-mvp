@@ -1,3 +1,4 @@
+import { ConditionPanel } from '@/shared/components/visits/ConditionPanel';
 import { useState } from 'react';
 import type { Complaint, ComplaintStatus } from '@common/types';
 import { Badge } from '@/shared/components/ui/Badge';
@@ -59,7 +60,7 @@ export default function ComplaintsPage() {
                   <strong>#{c.id} · {COMPLAINT_CATEGORY_LABELS[c.category]}</strong>
                   <Badge tone={TONE[c.status]}>{COMPLAINT_STATUS_LABELS[c.status]}</Badge>
                 </div>
-                <p style={{ margin: '6px 0' }}>{c.description}</p>
+                <p style={{ margin: '6px 0' }}>{c.description}{c.visitId&&<details><summary>أدلة حالة السيارة</summary><ConditionPanel visitId={c.visitId}/></details>}</p>
                 <div className="muted tiny">
                   {c.operatorId ? operatorName(c.operatorId) : '—'}
                   {c.siteId && <> · {siteName(c.siteId)}</>}

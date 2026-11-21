@@ -110,6 +110,7 @@ export default function HomePage() {
         </section>
       )}
 
+      <div className="row" style={{padding:16}}><Link className="btn" to="/report">بلّغ عن فاليه غير مرخّص</Link></div>
       <section className="driver-sheet">
         <div className="sheet-handle" aria-hidden />
         <div className="sheet-head">

@@ -1,3 +1,4 @@
+import { ReturnQueue } from '@/shared/components/visits/ReturnQueue';
 import { useState } from 'react';
 import { FilterBar } from '@/shared/components/ui/filters';
 import { dateField, searchField, sortField, statusField } from '@/shared/components/ui/filters/fields';
@@ -77,6 +78,7 @@ export default function RequestsPage() {
         </div>
       </div>
 
+      <ReturnQueue/>
       <FilterBar fields={fields} filters={filters} count={list.length} total={myHandoffs.length} />
       <div className="card">
         <h2>صندوق طلبات التسليم من السائقين</h2>

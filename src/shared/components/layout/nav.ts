@@ -16,6 +16,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/staff/checkin', label: 'دخول' },
     { to: '/staff/checkout', label: 'خروج' },
     { to: '/staff/cars', label: 'الحالية' },
+    { to: '/staff/condition', label: 'صور الحالة' },
     { to: '/staff/incident', label: 'بلاغ' },
   ],
   operator: [
@@ -35,6 +36,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/gov/operators', label: 'المشغّلون' },
     { to: '/gov/visits', label: 'تدقيق' },
     { to: '/gov/incidents', label: 'بلاغات' },
+    { to: '/gov/public-reports', label: 'بلاغات الجمهور' },
     { to: '/gov/complaints', label: 'الشكاوى' },
     { to: '/gov/payments', label: 'الإيرادات' },
     { to: '/gov/reports', label: 'التقارير' },
@@ -46,5 +48,5 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
 export const NAV_ICONS: Record<string, IconName> = {
   alerts: 'bell', map: 'map', licenses: 'shield', operators: 'users', visits: 'car', incidents: 'shield',
   complaints: 'message', payments: 'wallet', reports: 'chart', requests: 'bell', employees: 'users',
-  license: 'file', feedback: 'message', scan: 'scan', checkin: 'arrow', checkout: 'arrow', cars: 'car', incident: 'shield',
+  license: 'file', feedback: 'message', scan: 'scan', checkin: 'arrow', checkout: 'arrow', cars: 'car', incident: 'shield', condition: 'scan', 'public-reports': 'pin',
 };

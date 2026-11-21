@@ -1,3 +1,4 @@
+import { ConditionPanel } from './ConditionPanel';
 import type { Visit } from '@common/types';
 import { Badge } from '@/shared/components/ui/Badge';
 import { durationLabel, formatDateTime } from '@/shared/lib/format';
@@ -63,6 +64,7 @@ export function VisitDetailDrawer({ visit: selected, onClose }: { visit: Visit; 
             </div>
           </div>
 
+          <ConditionPanel visitId={selected.id} />
           <h4 style={{ marginBottom: 8 }}>الخط الزمني</h4>
           <ol className="timeline">
             {visitTimeline(selected).map((step) => (

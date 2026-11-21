@@ -76,6 +76,7 @@ export default function CheckInPage() {
             <div className="muted">الموظف: {empName(visit.checkInBy)}</div>
             {visit.notes && <div className="muted">ملاحظات: {visit.notes}</div>}
           </div>
+          <Link className="btn btn-primary" to={`/staff/condition?visit=${visit.id}`}>وثّق أربع زوايا للسيارة</Link>
           <div className="row" style={{ marginTop: 14 }}>
             <button className="btn btn-primary" type="button" onClick={() => setVisit(null)}>
               دخول سيارة أخرى

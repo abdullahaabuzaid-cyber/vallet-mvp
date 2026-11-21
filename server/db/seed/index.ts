@@ -3,6 +3,7 @@ import { q1, tx } from '../pool.ts';
 import { DEMO_ACCOUNTS, DEMO_DRIVERS } from './demoAccounts.ts';
 import { DEMO_DATA } from './demoData.ts';
 import { seedBillingAndFeedback } from './billing.ts';
+import { EXPANSION_TABLES } from '../expansion.ts';
 
 export async function isSeeded() {
   const r = await q1<{ n: string }>('select count(*)::text as n from operators');
@@ -14,7 +15,7 @@ export async function seed(force = false) {
   await tx(async (c) => {
     if (force) {
       await c.query(`truncate authorities, operators, sites, employees, documents, users, otp_codes, handoffs, visits,
-        incidents, alerts, complaints, ratings, payments, invoices restart identity cascade`);
+        incidents, alerts, complaints, ratings, payments, invoices, ${EXPANSION_TABLES} restart identity cascade`);
       await c.query(`alter sequence visit_seq restart with 240891; alter sequence handoff_seq restart with 100;
         alter sequence incident_seq restart with 311; alter sequence invoice_seq restart with 1001; alter sequence entity_seq restart with 1000;`);
     }

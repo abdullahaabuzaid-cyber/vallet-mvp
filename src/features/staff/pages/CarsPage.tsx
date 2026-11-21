@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { PrepareButton } from '@/shared/components/visits/ArrivalButtons';
 import { Badge } from '@/shared/components/ui/Badge';
 import { checkOut, empName, markReady, useStore } from '@/store';
 import { durationLabel } from '@/shared/lib/format';
@@ -56,6 +58,9 @@ export default function CarsPage() {
                     ) : (
                       <Badge tone="info">مركونة</Badge>
                     )}
+                    <Link className="btn btn-sm" to={`/staff/condition?visit=${v.id}`}>صور الحالة</Link>
+                    <PrepareButton visit={v}/>
+                    {v.arrivalEta&&<small>الوصول {new Date(v.arrivalEta).toLocaleTimeString('ar-JO')} {v.preparingAt?'· جاري التجهيز':''}</small>}
                     {!v.readyAt && (
                       <button type="button" className="btn btn-sm" onClick={() => void markReady(v.id)}>
                         جاهزة

@@ -25,6 +25,9 @@ export interface Visit {
   returnRequestedAt?: string;
   /** Staff marked the car ready at the gate */
   readyAt?: string;
+  preparingAt?: string;
+  arrivalEta?: string;
+  conditionStatus?: string;
 }
 
 export interface VisitExtras {

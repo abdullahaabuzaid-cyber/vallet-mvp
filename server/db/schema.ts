@@ -1,4 +1,5 @@
 import { pool } from './pool.ts';
+import { migrateExpansion } from './expansion.ts';
 
 /** Idempotent schema: safe to run on every boot (create if not exists / add column if not exists). */
 const SCHEMA = `
@@ -82,4 +83,5 @@ alter table visits add column if not exists ready_at timestamptz;
 
 export async function migrate() {
   await pool.query(SCHEMA);
+  await migrateExpansion();
 }

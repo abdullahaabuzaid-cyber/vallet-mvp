@@ -1,3 +1,6 @@
+import ConditionPage from '@/features/staff/pages/ConditionPage';
+import PublicReportPage from '@/features/driver/pages/PublicReportPage';
+import PublicReportsPage from '@/features/gov/pages/PublicReportsPage';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import DriverAuthPage from '@/features/driver/pages/AuthPage';
@@ -33,6 +36,7 @@ type PortalRoute = { path: string; element: React.ReactNode };
 /** Portal routes per role; each is wrapped in <Guard role=…>. */
 const PORTAL: Record<PortalRole, PortalRoute[]> = {
   staff: [
+    { path: '/staff/condition', element: <ConditionPage /> },
     { path: '/staff', element: <StaffHomePage /> },
     { path: '/staff/scan', element: <StaffScanPage /> },
     { path: '/staff/checkin', element: <StaffCheckInPage /> },
@@ -50,6 +54,7 @@ const PORTAL: Record<PortalRole, PortalRoute[]> = {
     { path: '/operator/feedback', element: <OperatorFeedbackPage /> },
   ],
   gov: [
+    { path: '/gov/public-reports', element: <PublicReportsPage /> },
     { path: '/gov', element: <GovSummaryPage /> },
     { path: '/gov/licenses', element: <GovLicenseReviewPage /> },
     { path: '/gov/operators', element: <GovOperatorsPage /> },
@@ -71,6 +76,7 @@ export function AppRoutes() {
       {(Object.keys(PORTAL) as PortalRole[]).flatMap((role) =>
         PORTAL[role].map((r) => <Route key={r.path} path={r.path} element={<Guard role={role}>{r.element}</Guard>} />)
       )}
+      <Route path="/report" element={<PublicReportPage />} />
       <Route path="/driver" element={<DriverHomePage />} />
       <Route path="/driver/status" element={<DriverStatusPage />} />
       <Route path="/driver/auth" element={<DriverAuthPage />} />

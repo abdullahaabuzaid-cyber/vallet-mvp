@@ -1,3 +1,5 @@
+import { ConditionPanel } from '@/shared/components/visits/ConditionPanel';
+import { ArrivalButtons } from '@/shared/components/visits/ArrivalButtons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/shared/components/ui/Badge';
@@ -59,6 +61,8 @@ function Feedback({ visit }: { visit: Visit }) {
 
   return (
     <div className="feedback-box">
+      {!visit.checkOutAt && <ArrivalButtons visit={visit}/>}
+      <details><summary>صور حالة السيارة والتأكيد</summary><ConditionPanel visitId={visit.id} canReview={!!visit.readyAt||!!visit.checkOutAt}/></details>
       {visit.checkOutAt && (
         <div>
           <div className="muted tiny">{rating ? 'تقييمك' : 'قيّم الخدمة'}</div>
