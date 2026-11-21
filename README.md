@@ -15,6 +15,30 @@
 
 أرقام سائقين تجريبية: `0791234501`, `0771112233` (أي رقم أردني يعمل).
 
+## هيكل المشروع
+
+```
+server/                 الخادم (Express + Postgres)
+  index.ts              تشغيل فقط: migrate → seed → listen
+  app.ts, routes.ts     تركيب الـ middleware وربط مسارات الوحدات
+  config/env.ts         كل متغيرات البيئة في مكان واحد
+  db/                   pool + schema + mappers + seed/ (بيانات العرض)
+  middleware/           auth (الجلسة/الأدوار)، رفع الملفات، الأخطاء، SPA
+  modules/<domain>/     لكل مجال: *.routes.ts (HTTP) + *.service.ts (منطق + SQL)
+  utils/                http errors، تحقق المدخلات، الهاتف، PDF
+  assets/fonts/         خطوط PDF العربية
+common/                 مشترك بين الخادم والواجهة: types/ و constants/ (المستندات، التسميات)
+src/                    الواجهة (React + Vite)
+  app/                  App، جدول المسارات، Guard، ErrorBoundary، PWA
+  features/<role>/      auth | driver | staff | operator | gov → pages/ components/ hooks/
+  shared/               components/ (layout, ui, map, billing) + lib/ (api, toast, format…) + constants/
+  store/                core.ts + slices/ (أفعال لكل مجال) + selectors/ + realtime.ts
+  styles/               index.css يستورد ملفات CSS مقسّمة حسب الجزء
+e2e/run.mjs             اختبار متكامل بالمتصفح (25 حالة)
+```
+
+الاستيراد في الواجهة عبر `@/…` (= `src/`) و `@common/…` (= `common/`). الخادم يستورد `common/` بمسارات نسبية (يعمل عبر tsx بدون بناء).
+
 ## الإعدادات (متغيرات البيئة)
 - `DATABASE_URL` — Postgres. `JWT_SECRET` — توقيع الجلسات. `PORT` (80 على Railway). `UPLOAD_DIR` (`/data/uploads`).
 - SMS: `SMS_PROVIDER=twilio` + `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` — أو `SMS_PROVIDER=webhook` + `SMS_WEBHOOK_URL` (+`SMS_WEBHOOK_TOKEN`). بدونها: وضع تطوير، الرمز يظهر على الشاشة ويُسجَّل في السجلات.
