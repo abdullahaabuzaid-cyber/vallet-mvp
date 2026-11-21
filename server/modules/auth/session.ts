@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import type { Response } from 'express';
-import type { Role } from '../../../shared/types/index.ts';
+import type { Role } from '../../../common/types/index.ts';
 import { env } from '../../config/env.ts';
 import { q1 } from '../../db/pool.ts';
 

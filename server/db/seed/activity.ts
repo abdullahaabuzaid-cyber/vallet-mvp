@@ -1,0 +1,179 @@
+import type { Employee, HandoffRequest, Incident, Visit } from '../../../common/types/index.ts';
+import { carThumb, hoursAgo, minsAgo } from './clock.ts';
+
+export const DEMO_ACTIVITY: {
+  employees: Employee[];
+  visits: Visit[];
+  handoffs: HandoffRequest[];
+  incidents: Incident[];
+} = {
+  employees: [
+    { id: 'emp-1', operatorId: 'op-1', name: 'أحمد سالم', nationalId: '9912345671', phone: '0791234567', siteId: 'site-1', active: true, reviewStatus: 'approved', docs: [
+      { id: 'nid', name: 'الهوية', status: 'accepted', fileName: 'id.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'license', name: 'رخصة قيادة سارية', status: 'accepted', fileName: 'dl.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'clearance', name: 'شهادة عدم محكومية', status: 'accepted', fileName: 'clearance.pdf', uploadedAt: '2025-01-01T10:00:00.000Z' },
+    ] },
+    { id: 'emp-2', operatorId: 'op-1', name: 'خالد يوسف', nationalId: '9812345674', phone: '0797654321', siteId: 'site-2', active: true, reviewStatus: 'approved', docs: [
+      { id: 'nid', name: 'الهوية', status: 'accepted', fileName: 'id.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'license', name: 'رخصة قيادة سارية', status: 'accepted', fileName: 'dl.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'clearance', name: 'شهادة عدم محكومية', status: 'accepted', fileName: 'clearance.pdf', uploadedAt: '2025-01-01T10:00:00.000Z' },
+    ] },
+    { id: 'emp-3', operatorId: 'op-1', name: 'سامر علي', nationalId: '9912345677', phone: '0781112233', active: false, reviewStatus: 'rejected', rejectReason: 'رخصة منتهية', docs: [
+      { id: 'nid', name: 'الهوية', status: 'accepted', fileName: 'id.jpg' },
+      { id: 'license', name: 'رخصة قيادة سارية', status: 'rejected', note: 'منتهية' },
+      { id: 'clearance', name: 'شهادة عدم محكومية', status: 'uploaded', fileName: 'c.pdf' },
+    ] },
+    { id: 'emp-4', operatorId: 'op-1', name: 'محمود حسن', nationalId: '9923456781', phone: '0793334455', siteId: 'site-1', active: true, reviewStatus: 'approved', docs: [
+      { id: 'nid', name: 'الهوية', status: 'accepted', fileName: 'id.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'license', name: 'رخصة قيادة سارية', status: 'accepted', fileName: 'dl.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'clearance', name: 'شهادة عدم محكومية', status: 'accepted', fileName: 'clearance.pdf', uploadedAt: '2025-01-01T10:00:00.000Z' },
+    ] },
+    { id: 'emp-5', operatorId: 'op-1', name: 'رامي فهد', nationalId: '9834567892', phone: '0775556677', siteId: 'site-2', active: true, reviewStatus: 'pending', docs: [
+      { id: 'nid', name: 'الهوية', status: 'uploaded', fileName: 'id.jpg', uploadedAt: '2026-11-05T10:00:00.000Z' },
+      { id: 'license', name: 'رخصة قيادة سارية', status: 'uploaded', fileName: 'dl.jpg', uploadedAt: '2026-11-05T10:00:00.000Z' },
+      { id: 'clearance', name: 'شهادة عدم محكومية', status: 'missing', note: 'ناقصة' },
+    ] },
+    { id: 'emp-6', operatorId: 'op-5', name: 'عمر ناصر', nationalId: '9945678903', phone: '0798889900', siteId: 'site-8', active: true, reviewStatus: 'approved', docs: [
+      { id: 'nid', name: 'الهوية', status: 'accepted', fileName: 'id.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'license', name: 'رخصة قيادة سارية', status: 'accepted', fileName: 'dl.jpg', uploadedAt: '2025-01-01T10:00:00.000Z' },
+      { id: 'clearance', name: 'شهادة عدم محكومية', status: 'accepted', fileName: 'clearance.pdf', uploadedAt: '2025-01-01T10:00:00.000Z' },
+    ] },
+  ],
+  visits: [
+    {
+      id: 'v1', receiptNo: 'V-240871', plate: '12-34567', operatorId: 'op-1', siteId: 'site-1',
+      checkInBy: 'emp-1', checkInAt: minsAgo(35), parkedAt: minsAgo(32),
+      notes: 'خدش باب أمامي', carMake: 'تويوتا', carModel: 'كامري', carColor: 'أبيض',
+      ownerPhone: '0791234501', photoThumb: carThumb('#c9cdd4', 'كامري'), handoffId: 'h-91',
+      returnRequestedAt: minsAgo(8),
+    },
+    {
+      id: 'v2', receiptNo: 'V-240866', plate: '22-90112', operatorId: 'op-1', siteId: 'site-1',
+      checkInBy: 'emp-1', checkInAt: hoursAgo(1), parkedAt: minsAgo(55),
+      carMake: 'هيونداي', carModel: 'النترا', carColor: 'فضي', ownerPhone: '0795550102',
+      photoThumb: carThumb('#9aa3af', 'النترا'), handoffId: 'h-92',
+    },
+    {
+      id: 'v3', receiptNo: 'V-240860', plate: '10-55120', operatorId: 'op-1', siteId: 'site-1',
+      checkInBy: 'emp-4', checkInAt: hoursAgo(1.3), parkedAt: hoursAgo(1.2),
+      carMake: 'كيا', carModel: 'سبورتاج', carColor: 'أسود', ownerPhone: '0782223344',
+      photoThumb: carThumb('#2b2f36', 'سبورتاج'),
+    },
+    {
+      id: 'v4', receiptNo: 'V-240855', plate: '31-70045', operatorId: 'op-1', siteId: 'site-1',
+      checkInBy: 'emp-1', checkInAt: hoursAgo(2), parkedAt: hoursAgo(1.9),
+      carMake: 'مرسيدس', carModel: 'C200', carColor: 'رمادي', ownerPhone: '0799001122',
+      photoThumb: carThumb('#6b7280', 'C200'), handoffId: 'h-93',
+    },
+    {
+      id: 'v5', receiptNo: 'V-240850', plate: '17-22019', operatorId: 'op-1', siteId: 'site-2',
+      checkInBy: 'emp-2', checkInAt: hoursAgo(2.5), parkedAt: hoursAgo(2.4),
+      checkOutAt: hoursAgo(0.5), checkOutBy: 'emp-2', returnRequestedAt: hoursAgo(0.7),
+      carMake: 'نيسان', carModel: 'صني', carColor: 'أزرق', ownerPhone: '0771112233',
+      photoThumb: carThumb('#3b82f6', 'صني'), handoffId: 'h-94',
+    },
+    {
+      id: 'v6', receiptNo: 'V-240844', plate: '40-11873', operatorId: 'op-1', siteId: 'site-1',
+      checkInBy: 'emp-1', checkInAt: hoursAgo(3.2), parkedAt: hoursAgo(3.1),
+      checkOutAt: hoursAgo(1.8), checkOutBy: 'emp-4', returnRequestedAt: hoursAgo(2),
+      carMake: 'هوندا', carModel: 'سيفيك', carColor: 'أحمر', ownerPhone: '0793332211',
+      photoThumb: carThumb('#dc2626', 'سيفيك'), handoffId: 'h-95',
+    },
+    {
+      id: 'v7', receiptNo: 'V-240830', plate: '55-33441', operatorId: 'op-1', siteId: 'site-2',
+      checkInBy: 'emp-2', checkInAt: hoursAgo(4), parkedAt: hoursAgo(3.9),
+      checkOutAt: hoursAgo(2), checkOutBy: 'emp-5', returnRequestedAt: hoursAgo(2.2),
+      carMake: 'شفروليه', carModel: 'ماليبو', carColor: 'أبيض', ownerPhone: '0784445566',
+      photoThumb: carThumb('#e5e7eb', 'ماليبو'),
+    },
+    {
+      id: 'v8', receiptNo: 'V-240820', plate: '08-11220', operatorId: 'op-1', siteId: 'site-2',
+      checkInBy: 'emp-5', checkInAt: minsAgo(50), parkedAt: minsAgo(45),
+      carMake: 'Mazda', carModel: 'CX-5', carColor: 'burgundy', ownerPhone: '0796667788',
+      photoThumb: carThumb('#7f1d1d', 'CX-5'), handoffId: 'h-96',
+    },
+    {
+      id: 'v9', receiptNo: 'V-240810', plate: '19-88776', operatorId: 'op-1', siteId: 'site-2',
+      checkInBy: 'emp-2', checkInAt: hoursAgo(1.5), parkedAt: hoursAgo(1.4),
+      carMake: 'BMW', carModel: '520i', carColor: 'أسود', ownerPhone: '0791010101',
+      photoThumb: carThumb('#111827', '520i'),
+    },
+    {
+      id: 'v10', receiptNo: 'V-238102', plate: '33-44556', operatorId: 'op-5', siteId: 'site-8',
+      checkInBy: 'emp-6', checkInAt: hoursAgo(48), parkedAt: hoursAgo(47.8),
+      checkOutAt: hoursAgo(46), checkOutBy: 'emp-6', returnRequestedAt: hoursAgo(46.3),
+      carMake: 'كيا', carModel: 'ريو', carColor: 'أصفر', ownerPhone: '0798889900',
+      photoThumb: carThumb('#eab308', 'ريو'),
+    },
+    {
+      id: 'v11', receiptNo: 'V-240888', plate: '27-66001', operatorId: 'op-1', siteId: 'site-1',
+      checkInBy: 'emp-4', checkInAt: minsAgo(18), parkedAt: minsAgo(15),
+      carMake: 'تويوتا', carModel: 'لاندكروزر', carColor: 'بيج', ownerPhone: '0792020202',
+      photoThumb: carThumb('#d2b48c', 'LC'), handoffId: 'h-97',
+    },
+    {
+      id: 'v12', receiptNo: 'V-240890', plate: '14-77889', operatorId: 'op-1', siteId: 'site-2',
+      checkInBy: 'emp-2', checkInAt: hoursAgo(5.5), parkedAt: hoursAgo(5.4),
+      checkOutAt: hoursAgo(3.5), checkOutBy: 'emp-2', returnRequestedAt: hoursAgo(3.8),
+      carMake: 'فورد', carModel: 'فيوجن', carColor: 'رمادي', ownerPhone: '0773030303',
+      photoThumb: carThumb('#64748b', 'فيوجن'), handoffId: 'h-98',
+    },
+  ],
+  handoffs: [
+    { id: 'h-91', plate: '12-34567', siteId: 'site-1', operatorId: 'op-1', status: 'accepted', createdAt: minsAgo(40), acceptedAt: minsAgo(38), assignedEmployeeId: 'emp-1', visitId: 'v1', ownerPhone: '0791234501' },
+    { id: 'h-92', plate: '22-90112', siteId: 'site-1', operatorId: 'op-1', status: 'accepted', createdAt: hoursAgo(1.1), acceptedAt: hoursAgo(1.05), assignedEmployeeId: 'emp-1', visitId: 'v2', ownerPhone: '0795550102' },
+    { id: 'h-93', plate: '31-70045', siteId: 'site-1', operatorId: 'op-1', status: 'accepted', createdAt: hoursAgo(2.15), acceptedAt: hoursAgo(2.05), assignedEmployeeId: 'emp-1', visitId: 'v4', ownerPhone: '0799001122' },
+    { id: 'h-94', plate: '17-22019', siteId: 'site-2', operatorId: 'op-1', status: 'accepted', createdAt: hoursAgo(2.6), acceptedAt: hoursAgo(2.55), assignedEmployeeId: 'emp-2', visitId: 'v5', ownerPhone: '0771112233' },
+    { id: 'h-95', plate: '40-11873', siteId: 'site-1', operatorId: 'op-1', status: 'accepted', createdAt: hoursAgo(3.3), acceptedAt: hoursAgo(3.25), assignedEmployeeId: 'emp-1', visitId: 'v6', ownerPhone: '0793332211' },
+    { id: 'h-96', plate: '08-11220', siteId: 'site-2', operatorId: 'op-1', status: 'accepted', createdAt: minsAgo(55), acceptedAt: minsAgo(52), assignedEmployeeId: 'emp-5', visitId: 'v8', ownerPhone: '0796667788' },
+    { id: 'h-97', plate: '27-66001', siteId: 'site-1', operatorId: 'op-1', status: 'accepted', createdAt: minsAgo(22), acceptedAt: minsAgo(20), assignedEmployeeId: 'emp-4', visitId: 'v11', ownerPhone: '0792020202' },
+    { id: 'h-98', plate: '14-77889', siteId: 'site-2', operatorId: 'op-1', status: 'accepted', createdAt: hoursAgo(5.6), acceptedAt: hoursAgo(5.55), assignedEmployeeId: 'emp-2', visitId: 'v12', ownerPhone: '0773030303' },
+    { id: 'h-99', plate: '66-10020', siteId: 'site-1', operatorId: 'op-1', status: 'pending', createdAt: minsAgo(4), ownerPhone: '0794040404' },
+  ],
+  incidents: [
+    {
+      id: 'inc-1',
+      type: 'damage',
+      visitId: 'v1',
+      operatorId: 'op-1',
+      description: 'خدش على الباب الأمامي الأيمن — موثّق عند الدخول',
+      status: 'investigating',
+      createdAt: minsAgo(30),
+      createdBy: 'emp-1',
+      plate: '12-34567',
+    },
+    {
+      id: 'inc-2',
+      type: 'unlicensed',
+      description: 'فاليه عشوائي أمام مطعم في الدوار الثالث — لا ترخيص ظاهر',
+      status: 'fined',
+      createdAt: hoursAgo(20),
+      createdBy: 'gov',
+      area: 'الدوار الثالث',
+      lat: 31.9612,
+      lng: 35.8755,
+    },
+    {
+      id: 'inc-4',
+      type: 'unlicensed',
+      description: 'موقف غير مرخّص قرب صوالحة — بلاغ مواطن',
+      status: 'open',
+      createdAt: hoursAgo(6),
+      createdBy: 'gov',
+      area: 'صوالحة',
+      lat: 31.985,
+      lng: 35.835,
+    },
+    {
+      id: 'inc-3',
+      type: 'lost_keys',
+      visitId: 'v5',
+      operatorId: 'op-1',
+      description: 'تأخر تسليم المفاتيح 15 دقيقة',
+      status: 'closed',
+      createdAt: hoursAgo(5),
+      createdBy: 'emp-2',
+      plate: '17-22019',
+    },
+  ],
+};

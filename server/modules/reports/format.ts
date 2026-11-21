@@ -1,4 +1,4 @@
-import { INCIDENT_STATUS_LABELS, INCIDENT_TYPE_LABELS, LICENSE_STATUS_LABELS } from '../../../shared/constants/labels.ts';
+import { INCIDENT_STATUS_LABELS, INCIDENT_TYPE_LABELS, LICENSE_STATUS_LABELS } from '../../../common/constants/labels.ts';
 
 /** Long-form invoice kinds used in exported reports and invoice PDFs. */
 export const KIND_LABELS: Record<string, string> = {

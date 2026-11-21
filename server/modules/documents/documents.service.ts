@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { OPERATOR_DOC_DEFS, STAFF_DOC_DEFS, type DocDef } from '../../../shared/constants/documents.ts';
+import { OPERATOR_DOC_DEFS, STAFF_DOC_DEFS, type DocDef } from '../../../common/constants/documents.ts';
 import { env } from '../../config/env.ts';
 import { q, q1 } from '../../db/pool.ts';
 import { bad } from '../../utils/http.ts';

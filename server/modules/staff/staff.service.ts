@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { STAFF_DOC_DEFS } from '../../../shared/constants/documents.ts';
+import { STAFF_DOC_DEFS } from '../../../common/constants/documents.ts';
 import { nextId, q1, tx } from '../../db/pool.ts';
 import { bad, str } from '../../utils/http.ts';
 import { normalizePhone } from '../../utils/phone.ts';

@@ -10,5 +10,5 @@
     "types": ["node"],
     "resolveJsonModule": true
   },
-  "include": ["server", "shared"]
+  "include": ["server", "common"]
 }
