@@ -1,0 +1,206 @@
+/* —— Driver consumer landing (Careem / Uber vibe) —— */
+.shell-driver {
+  background:
+    radial-gradient(900px 420px at 80% -5%, #cfe0ff 0%, transparent 55%),
+    radial-gradient(700px 360px at 0% 20%, #d9f5ef 0%, transparent 50%),
+    #f2f5fa;
+}
+.main-driver {
+  width: min(560px, 100%);
+  padding: 0 0 40px;
+  margin: 0 auto;
+}
+
+.driver-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(213,222,232,.8);
+  color: var(--navy);
+}
+.driver-topbar .brand-name { color: var(--navy); }
+.driver-topbar .brand small { color: var(--text-3); opacity: 1; max-width: 180px; }
+.driver-top-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.icon-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 1.05rem;
+}
+.portal-menu-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.portal-menu-btn:hover { border-color: var(--primary); color: var(--primary); }
+.portal-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  z-index: 60;
+}
+.portal-menu-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-3);
+  padding: 8px 10px 6px;
+}
+.portal-menu button {
+  display: block;
+  width: 100%;
+  text-align: right;
+  border: 0;
+  background: transparent;
+  padding: 11px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+.portal-menu button:hover { background: var(--primary-soft); color: var(--primary); }
+.portal-menu-reset {
+  margin-top: 4px !important;
+  border-top: 1px solid var(--border) !important;
+  border-radius: 0 0 12px 12px !important;
+  color: var(--text-3) !important;
+  font-weight: 500 !important;
+}
+
+.portal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.portal-back {
+  background: rgba(255,255,255,.14) !important;
+  border-color: rgba(255,255,255,.25) !important;
+  color: #fff !important;
+}
+
+.driver-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.driver-hero {
+  position: relative;
+  padding: 22px 18px 8px;
+  overflow: hidden;
+}
+.driver-hero.compact { padding-bottom: 4px; }
+.driver-hero-glow {
+  position: absolute;
+  inset: -40% -20% auto auto;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(11,95,255,.22), transparent 70%);
+  pointer-events: none;
+}
+.driver-kicker {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+.driver-hero h1 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4.5vw, 1.85rem);
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--navy);
+}
+.driver-hero-sub {
+  margin: 8px 0 14px;
+  color: var(--text-2);
+  font-size: 0.92rem;
+  max-width: 36ch;
+}
+.driver-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 6px 6px 12px;
+  box-shadow: var(--shadow);
+}
+.driver-search-icon { font-size: 1.1rem; }
+.driver-search input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 10px 4px;
+  min-width: 0;
+  font-size: 0.95rem;
+}
+.driver-search-meta {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 7px 10px;
+}
+.driver-search-meta.ok {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.driver-map-card {
+  margin: 10px 14px 0;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  background: #fff;
+}
+.driver-map-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--text-2);
+  background: linear-gradient(180deg, #f8fbff, #fff);
+  border-bottom: 1px solid var(--border);
+}
+.driver-map-card .lots-map {
+  height: min(38vh, 280px);
+  min-height: 220px;
+}

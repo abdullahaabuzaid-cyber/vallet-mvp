@@ -1,0 +1,10 @@
+/* Global styles, imported once from main.tsx. Order matters (later files override). */
+@import './base.css';
+@import './components.css';
+@import './map.css';
+@import './driver.css';
+@import './driver-sheet.css';
+@import './registration.css';
+@import './scanner-alerts.css';
+@import './car-log.css';
+@import './portal.css';

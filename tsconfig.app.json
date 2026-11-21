@@ -16,11 +16,17 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path aliases (mirrored in vite.config.ts) */
+    "paths": {
+      "@/*": ["./src/*"],
+      "@common/*": ["./common/*"]
+    },
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "shared"]
+  "include": ["src", "common"]
 }

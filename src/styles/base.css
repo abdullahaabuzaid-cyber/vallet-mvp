@@ -1,0 +1,184 @@
+/* Design tokens, reset, app shell, brand, nav tabs, cards */
+:root {
+  --bg: #eef2f7;
+  --bg-accent: #e4ebf5;
+  --surface: #ffffff;
+  --surface-2: #f3f6fa;
+  --border: #d5dee8;
+  --border-strong: #b4c2d1;
+  --text: #0c1a2e;
+  --text-2: #3d4f63;
+  --text-3: #6b7f94;
+  --primary: #0b5fff;
+  --primary-dark: #0847c7;
+  --primary-soft: #e8f0ff;
+  --success: #0d8a4b;
+  --success-soft: #e5f7ee;
+  --warning: #a86b12;
+  --warning-soft: #fff5e4;
+  --danger: #c62828;
+  --danger-soft: #fdecea;
+  --navy: #0b1f3a;
+  --navy-2: #12355f;
+  --shadow: 0 1px 2px rgba(12, 26, 46, 0.04), 0 8px 28px rgba(12, 26, 46, 0.06);
+  --shadow-lg: 0 12px 40px rgba(12, 26, 46, 0.12);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --font: "IBM Plex Sans Arabic", "Tajawal", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  background:
+    radial-gradient(1200px 480px at 100% -10%, #d7e6ff 0%, transparent 55%),
+    radial-gradient(900px 400px at 0% 0%, #dff3f0 0%, transparent 50%),
+    var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+button, input, select, textarea { font: inherit; }
+a { color: inherit; text-decoration: none; }
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: linear-gradient(125deg, var(--navy) 0%, var(--navy-2) 48%, #0d4f8b 100%);
+  color: #fff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 8px 28px rgba(11, 31, 58, 0.28);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #7dd3fc, #0b5fff 55%, #0847c7);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.28), 0 6px 14px rgba(0,0,0,.18);
+  flex-shrink: 0;
+}
+.brand-mark-letter {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.brand-text { min-width: 0; }
+.brand-name {
+  display: block;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.brand small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.72rem;
+  opacity: 0.78;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.role-switch {
+  display: flex;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.role-switch button {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.86);
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+  transition: .15s ease;
+  white-space: nowrap;
+}
+.role-switch button.active {
+  background: #fff;
+  color: var(--navy);
+  box-shadow: var(--shadow);
+}
+
+.main {
+  flex: 1;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 18px 14px 28px;
+}
+
+.app-footer {
+  text-align: center;
+  color: var(--text-3);
+  font-size: 0.78rem;
+  padding: 10px 14px 22px;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+  scrollbar-width: thin;
+}
+.nav-tabs a, .nav-tabs button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  padding: 9px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 2px rgba(12,26,46,.03);
+  transition: .12s ease;
+}
+.nav-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+.nav-tabs a.active, .nav-tabs button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(11,95,255,.25);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-bottom: 14px;
+}
