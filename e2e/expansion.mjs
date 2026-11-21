@@ -43,6 +43,7 @@ try {
  if(phase>=3){const {phase3}=await import('./phase3.mjs');await phase3({call,check,gov,op,staff,drv,v,B,file,browser,prefix});}
  if(phase>=4){const {phase4}=await import('./phase4.mjs');await phase4({call,check,gov,op,staff,drv,v,B,file,browser,prefix});}
  if(phase>=5){const {phase5}=await import('./phase5.mjs');await phase5({call,check,gov,op,staff,drv,v,B,file,browser,prefix});}
+ if(phase>=5){const {phase5}=await import('./phase5.mjs');await phase5({call,check,gov,op,staff,drv,v,B,file,browser,prefix});}
  await call(staff,`/visits/${v.id}/checkout`,{});check('complete eight-angle evidence permits checkout',true);
 } catch(e){results.push({name:e.message,ok:false});console.error(e);} finally {
  fs.mkdirSync('shots',{recursive:true});fs.writeFileSync(`shots/${prefix}-phase${phase}.json`,JSON.stringify({base:B,results},null,2));await browser.close();const n=results.filter(r=>r.ok).length;console.log(`${n}/${results.length} passed`);process.exit(n===results.length?0:1);

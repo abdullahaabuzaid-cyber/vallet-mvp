@@ -15,6 +15,7 @@ const SEV: Record<string, 'bad' | 'warn' | 'info'> = {
 };
 
 const KIND_LABEL: Record<string, string> = {
+  lot_full: 'الموقف ممتلئ', fraud_short: 'مدة قصيرة', fraud_long: 'مدة طويلة', fraud_unlogged: 'تسجيل/وردية', fraud_ocr: 'تعارض OCR', damage_flag: 'فحص حالة تجريبي',
   overstay: 'تجاوز مدة',
   exit_no_request: 'خروج بلا طلب',
   unlicensed_cluster: 'تجمّع غير مرخّص',

@@ -26,6 +26,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/operator/requests', label: 'طلبات السائقين' },
     { to: '/operator/bookings', label: 'الحجوزات المسبقة' },
     { to: '/operator/employees', label: 'الموظفون' },
+    { to: '/operator/insights', label: 'التوقعات وإشارات المخاطر' },
     { to: '/operator/shifts', label: 'الورديات والأداء' },
     { to: '/operator/pricing', label: 'التسعير' },
     { to: '/operator/contracts', label: 'عقود الجهات' },
@@ -54,7 +55,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
 
 /** Icon per route segment (sidebar + page heading). */
 export const NAV_ICONS: Record<string, IconName> = {
-  alerts: 'bell', map: 'map', licenses: 'shield', operators: 'users', visits: 'car', incidents: 'shield',
+  insights: 'spark', alerts: 'bell', map: 'map', licenses: 'shield', operators: 'users', visits: 'car', incidents: 'shield',
   complaints: 'message', payments: 'wallet', reports: 'chart', requests: 'bell', employees: 'users',
   license: 'file', feedback: 'message', scan: 'scan', checkin: 'arrow', checkout: 'arrow', cars: 'car', incident: 'shield', condition: 'scan', bookings: 'clock', 'field-fines': 'shield', integrations: 'spark', shifts: 'users', pricing: 'wallet', contracts: 'file', 'public-reports': 'pin',
 };

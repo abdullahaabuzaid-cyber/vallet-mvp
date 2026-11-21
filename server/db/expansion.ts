@@ -1,6 +1,6 @@
 import { pool } from './pool.ts';
 /** Additive VAL-3 migrations only: never truncate or replace existing rows. */
-export const EXPANSION_TABLES = 'condition_photos, condition_reviews, public_reports, bookings, wallet_entries, tips, subscriptions, pricing_rules, shifts, contracts, contract_invoices, field_fines';
+export const EXPANSION_TABLES = 'condition_photos, condition_reviews, public_reports, bookings, wallet_entries, tips, subscriptions, pricing_rules, shifts, contracts, contract_invoices, field_fines, damage_assessments';
 export async function migrateExpansion() {
   await pool.query(`
     alter table visits add column if not exists arrival_eta timestamptz;
@@ -59,6 +59,11 @@ export async function migrateExpansion() {
       id serial primary key, number text unique not null, contract_id int not null references contracts(id) on delete cascade,
       operator_id text not null, period text not null, visits int not null, amount numeric(12,3) not null,
       status text not null default 'unpaid', issued_at timestamptz default now(), paid_at timestamptz, unique(contract_id, period)
+    );
+    alter table visits add column if not exists ocr_plate text;
+    create table if not exists damage_assessments (
+      visit_id text primary key, provider text not null, demo boolean not null default true, score numeric(5,3) not null,
+      flagged boolean not null, angles jsonb not null default '[]', created_at timestamptz default now()
     );
     create table if not exists field_fines (
       id serial primary key, inspector_id int not null, incident_id text, invoice_id int, operator_id text, offender text,

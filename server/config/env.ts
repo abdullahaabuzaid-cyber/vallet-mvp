@@ -17,6 +17,7 @@ export const env = {
   licenseFeeJod: Number(process.env.LICENSE_FEE_JOD || 500),
   fineDefaultJod: Number(process.env.FINE_DEFAULT_JOD || 1000),
   /** External integrations: unset URL → clearly labelled stub provider. */
+  ai: { visionProvider: process.env.AI_VISION_PROVIDER || '', visionKey: process.env.AI_VISION_KEY || '', assistantProvider: process.env.ASSISTANT_PROVIDER || '', assistantKey: process.env.ASSISTANT_LLM_KEY || '' },
   integrations: {
     vehicleUrl: process.env.VEHICLE_REGISTRY_URL || '',
     vehicleToken: process.env.VEHICLE_REGISTRY_TOKEN || '',

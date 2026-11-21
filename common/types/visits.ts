@@ -42,6 +42,8 @@ export interface VisitExtras {
   parkedAt?: string;
   returnRequestedAt?: string;
   handoffId?: string;
+  /** Plate as read by the camera OCR, kept for mismatch checks. */
+  ocrPlate?: string;
 }
 
 export interface HandoffRequest {

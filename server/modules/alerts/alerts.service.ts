@@ -1,4 +1,5 @@
 import { q } from '../../db/pool.ts';
+import { fraudSignals } from '../ai/fraud.rules.ts';
 
 /** Compute smart alerts from live data and persist them (status survives recompute). */
 export async function refreshAlerts() {
@@ -25,6 +26,7 @@ export async function refreshAlerts() {
   for (const s of full) {
     found.push({ id: `full-${s.id}`, kind: 'lot_full', severity: 'medium', title: 'موقف ممتلئ', detail: `${s.name}: ${s.n}/${s.capacity} سيارة` });
   }
+  for (const s of await fraudSignals()) found.push({ id: s.id, kind: s.kind, severity: s.severity, title: s.title, detail: s.detail });
   for (const a of found) {
     await q(
       `insert into alerts (id, kind, severity, title, detail) values ($1,$2,$3,$4,$5)

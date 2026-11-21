@@ -21,6 +21,7 @@ async function fileToThumb(file: File): Promise<string> {
 export default function CheckInPage() {
   const empId = useStore((s) => s.currentEmployeeId);
   const [plate, setPlate] = useState('');
+  const [ocrPlate,setOcrPlate]=useState('');
   const [notes, setNotes] = useState('');
   const [carMake, setCarMake] = useState('');
   const [carModel, setCarModel] = useState('');
@@ -32,7 +33,7 @@ export default function CheckInPage() {
   const photoRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
-    setPlate('');
+    setPlate('');setOcrPlate('');
     setNotes('');
     setCarMake('');
     setCarModel('');
@@ -50,7 +51,7 @@ export default function CheckInPage() {
       carModel,
       carColor,
       ownerPhone,
-      photoThumb,
+      photoThumb,ocrPlate,
     });
     if (!v) return;
     setVisit(v);
@@ -108,7 +109,7 @@ export default function CheckInPage() {
         {showCam && (
           <PlateScanner
             onPlate={(p, meta) => {
-              setPlate(p);
+              setPlate(p);setOcrPlate(meta.source==='ocr'?p:'');
               if (meta.source === 'ocr') setNotes((n) => n || 'دخول عبر OCR');
             }}
           />

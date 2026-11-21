@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { aiRouter } from './modules/ai/ai.routes.ts';
 import { inspectorRouter } from './modules/inspector/inspector.routes.ts';
 import { integrationsRouter } from './modules/integrations/integrations.routes.ts';
 import { heatmapGovRouter } from './modules/heatmap/heatmap.routes.ts';
@@ -34,7 +35,7 @@ import { visitsRouter } from './modules/visits/visits.routes.ts';
 export const apiRouter = Router();
 apiRouter.use(
   conditionRouter, arrivalRouter, publicReportsRouter, walletRouter, bookingsRouter,
-  pricingRouter, capacityRouter, shiftsRouter, contractsRouter, inspectorRouter, integrationsRouter,
+  pricingRouter, capacityRouter, shiftsRouter, contractsRouter, inspectorRouter, integrationsRouter, aiRouter,
   demoRouter, stateRouter, realtimeRouter, authRouter,
   handoffsRouter, visitsRouter, ratingsRouter, complaintsRouter, incidentsRouter,
   operatorsRouter, staffRouter, documentsRouter, licensesRouter, paymentsRouter,

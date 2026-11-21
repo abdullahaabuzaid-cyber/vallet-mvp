@@ -30,7 +30,8 @@ visitsRouter.post('/visits/:id/request-return', requireRole('driver', 'staff', '
 visitsRouter.post('/visits/checkin', requireRole('staff'), async (req, res) => {
   const v0 = await checkIn(req.user!, req.body);
   const price = await quote(v0.site_id).catch(() => ({ fee: null }));
-  const v = price.fee == null ? v0 : await q1(`update visits set fee=$2 where id=$1 returning *`, [v0.id, price.fee]);
+  const ocr = typeof req.body?.ocrPlate === 'string' ? req.body.ocrPlate.trim().slice(0, 20) || null : null;
+  const v = await q1(`update visits set fee=coalesce($2, fee), ocr_plate=$3 where id=$1 returning *`, [v0.id, price.fee, ocr]);
   void checkCapacity(v.site_id);
   notifyOperator(v.operator_id, { type: 'visit_in', title: 'دخول سيارة', body: `${v.plate} — ${v.receipt_no}` });
   if (v.owner_phone) publish({ driverPhone: v.owner_phone }, { type: 'visit_in', title: 'تم استلام سيارتك', body: `${v.plate} — إيصال ${v.receipt_no}`, link: '/driver/status' });

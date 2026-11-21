@@ -1,3 +1,4 @@
+import { HelpChat } from '@/features/driver/components/HelpChat';
 import { Link } from 'react-router-dom';
 import { useStore } from '@/store';
 import { LiveDot } from './LiveDot';
@@ -35,6 +36,7 @@ export function DriverHeader() {
           </Link>
         )}
       </div>
+      <HelpChat/>
     </header>
   );
 }

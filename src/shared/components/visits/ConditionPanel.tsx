@@ -1,3 +1,4 @@
+import { DamagePanel } from './DamagePanel';
 import { useState } from 'react';
 import { useStore } from '@/store';
 import { useResource } from '@/shared/hooks/useResource';
@@ -26,6 +27,7 @@ export function ConditionPanel({visitId,editable=false,canReview=false}:{visitId
     {editable&&<div className="stack"><div className="row"><select aria-label="مرحلة التصوير" value={stage} onChange={e=>setStage(e.target.value)}><option value="pickup">الاستلام</option><option value="handoff">التسليم</option></select><select aria-label="زاوية التصوير" value={angle} onChange={e=>setAngle(e.target.value)}>{Object.entries(ANGLES).map(([k,v])=><option value={k} key={k}>{v}</option>)}</select></div>
       <input aria-label="صورة حالة السيارة" disabled={busy} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={e=>void upload(e.target.files?.[0])}/>
     </div>}
+    <DamagePanel visitId={visitId} canRun={['staff','operator','gov'].includes(role||'')}/>
     {data.review?<p className="notice">{data.review.decision==='confirmed'?'السائق أكّد الحالة':'السائق اعترض — شكوى #'+data.review.complaint_id} {data.review.note}</p>:role==='driver'&&canReview&&<div className="stack"><input aria-label="تفاصيل اعتراض الحالة" value={note} onChange={e=>setNote(e.target.value)} placeholder="سبب الاعتراض (مطلوب للاعتراض)"/><div className="row"><button className="btn btn-success" onClick={()=>void decide('confirmed')}>أؤكد حالة السيارة</button><button className="btn" disabled={note.trim().length<5} onClick={()=>void decide('disputed')}>أعترض على الحالة</button></div></div>}
   </section>;
 }
