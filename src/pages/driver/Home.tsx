@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DEMO_AMMAN_PIN } from '../../data/seed';
+import { DEMO_AMMAN_PIN } from '../../lib/demoPin';
 import { Badge } from '../../components/Layout';
 import { LotsMap } from '../../components/LotsMap';
 import {

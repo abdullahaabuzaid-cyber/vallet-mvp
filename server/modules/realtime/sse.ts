@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
-import type { SessionUser } from './auth.ts';
+import type { SessionUser } from '../auth/session.ts';
 
 type Client = { id: number; res: Response; user?: SessionUser };
 const clients = new Map<number, Client>();
-let nextId = 1;
+let nextClientId = 1;
 
 export type Audience = {
   gov?: boolean;
@@ -15,6 +15,7 @@ export type Audience = {
 
 export type RtEvent = { type: string; title?: string; body?: string; link?: string; [k: string]: unknown };
 
+/** GET /api/events — Server-Sent Events stream scoped to the caller's session. */
 export function sseHandler(req: Request, res: Response) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -23,7 +24,7 @@ export function sseHandler(req: Request, res: Response) {
     'X-Accel-Buffering': 'no',
   });
   res.write(`retry: 3000\n\n`);
-  const id = nextId++;
+  const id = nextClientId++;
   clients.set(id, { id, res, user: req.user });
   res.write(`event: hello\ndata: ${JSON.stringify({ role: req.user?.role ?? 'guest' })}\n\n`);
   req.on('close', () => clients.delete(id));
@@ -42,13 +43,10 @@ function matches(u: SessionUser | undefined, a: Audience) {
   return false;
 }
 
+/** Push an event to every connected client in the audience. */
 export function publish(a: Audience, ev: RtEvent) {
   const data = `event: change\ndata: ${JSON.stringify(ev)}\n\n`;
   for (const c of clients.values()) {
     if (matches(c.user, a)) c.res.write(data);
   }
-}
-
-export function clientCount() {
-  return clients.size;
 }

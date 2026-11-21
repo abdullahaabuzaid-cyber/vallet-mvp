@@ -12,7 +12,6 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server
-COPY --from=build /app/src/data ./src/data
-COPY --from=build /app/src/types.ts ./src/types.ts
+COPY --from=build /app/shared ./shared
 EXPOSE 80
 CMD ["node", "--import", "tsx", "server/index.ts"]

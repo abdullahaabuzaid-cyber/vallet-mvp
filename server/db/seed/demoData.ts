@@ -1,4 +1,6 @@
-import type { AppState } from '../types';
+import type { Employee, HandoffRequest, Incident, Operator, Visit } from '../../../shared/types/index.ts';
+
+// Timestamps are relative to module load (server boot), same as before.
 
 const now = Date.now();
 const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
@@ -8,13 +10,16 @@ const carThumb = (color: string, label = 'سيارة') =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="64"><rect width="96" height="64" rx="10" fill="${color}"/><text x="48" y="38" text-anchor="middle" fill="#fff" font-size="13" font-family="Arial,sans-serif">${label}</text></svg>`
   )}`;
 
-export const SEED: Omit<AppState, 'loaded' | 'session' | 'complaints' | 'ratings' | 'invoices' | 'alerts' | 'lotRatings'> = {
-  role: 'driver',
-  currentEmployeeId: 'emp-1',
-  currentOperatorId: 'op-1',
-  visitSeq: 240890,
-  incidentSeq: 310,
-  handoffSeq: 99,
+export type DemoData = {
+  operators: Operator[];
+  employees: Employee[];
+  visits: Visit[];
+  handoffs: HandoffRequest[];
+  incidents: Incident[];
+};
+
+/** Demo dataset inserted on first boot and by the gov "reset demo" button. */
+export const DEMO_DATA: DemoData = {
   operators: [
     {
       id: 'op-1',
@@ -236,7 +241,6 @@ export const SEED: Omit<AppState, 'loaded' | 'session' | 'complaints' | 'ratings
     { id: 'h-98', plate: '14-77889', siteId: 'site-2', operatorId: 'op-1', status: 'accepted', createdAt: hoursAgo(5.6), acceptedAt: hoursAgo(5.55), assignedEmployeeId: 'emp-2', visitId: 'v12', ownerPhone: '0773030303' },
     { id: 'h-99', plate: '66-10020', siteId: 'site-1', operatorId: 'op-1', status: 'pending', createdAt: minsAgo(4), ownerPhone: '0794040404' },
   ],
-  driverAuth: null,
   incidents: [
     {
       id: 'inc-1',
@@ -284,6 +288,3 @@ export const SEED: Omit<AppState, 'loaded' | 'session' | 'complaints' | 'ratings
     },
   ],
 };
-
-/** Demo Amman pin when geolocation is denied */
-export const DEMO_AMMAN_PIN = { lat: 31.9539, lng: 35.9106, label: 'وسط عمّان (تجريبي)' };

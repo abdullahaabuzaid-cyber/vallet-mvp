@@ -1,3 +1,6 @@
+import { env } from '../../config/env.ts';
+import { toE164Jordan } from '../../utils/phone.ts';
+
 /**
  * Pluggable SMS provider. Configure with SMS_PROVIDER=twilio + TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_FROM,
  * or SMS_PROVIDER=webhook + SMS_WEBHOOK_URL (POST {to, message}). Without config → dev mode (code logged + shown on screen).
@@ -8,9 +11,6 @@ export interface SmsProvider {
   send(to: string, message: string): Promise<void>;
 }
 
-function toE164Jordan(phone: string) {
-  return phone.startsWith('0') ? `+962${phone.slice(1)}` : phone.startsWith('+') ? phone : `+${phone}`;
-}
 
 class DevProvider implements SmsProvider {
   name = 'dev';
@@ -52,12 +52,14 @@ class WebhookProvider implements SmsProvider {
   }
 }
 
-export function makeSmsProvider(): SmsProvider {
-  const p = (process.env.SMS_PROVIDER || '').toLowerCase();
-  const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM, SMS_WEBHOOK_URL, SMS_WEBHOOK_TOKEN } = process.env;
-  if (p === 'twilio' && TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_FROM) {
-    return new TwilioProvider(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM);
+function makeSmsProvider(): SmsProvider {
+  const { provider, twilioSid, twilioToken, twilioFrom, webhookUrl, webhookToken } = env.sms;
+  if (provider === 'twilio' && twilioSid && twilioToken && twilioFrom) {
+    return new TwilioProvider(twilioSid, twilioToken, twilioFrom);
   }
-  if (p === 'webhook' && SMS_WEBHOOK_URL) return new WebhookProvider(SMS_WEBHOOK_URL, SMS_WEBHOOK_TOKEN);
+  if (provider === 'webhook' && webhookUrl) return new WebhookProvider(webhookUrl, webhookToken);
   return new DevProvider();
 }
+
+/** The configured provider (chosen once at boot). */
+export const sms = makeSmsProvider();

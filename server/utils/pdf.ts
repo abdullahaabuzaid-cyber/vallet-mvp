@@ -3,8 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const FONT_REG = path.join(here, 'fonts', 'IBMPlexSansArabic-Regular.ttf');
-const FONT_BOLD = path.join(here, 'fonts', 'IBMPlexSansArabic-Bold.ttf');
+const FONT_REG = path.join(here, '..', 'assets', 'fonts', 'IBMPlexSansArabic-Regular.ttf');
+const FONT_BOLD = path.join(here, '..', 'assets', 'fonts', 'IBMPlexSansArabic-Bold.ttf');
 
 const RTL_RE = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 const LTR_RE = /[A-Za-z0-9]/;
