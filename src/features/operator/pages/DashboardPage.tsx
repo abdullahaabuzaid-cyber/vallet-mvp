@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { empName, siteName, useStore } from '@/store';
 import { Badge } from '@/shared/components/ui/Badge';
+import { StatCard } from '@/shared/components/ui/StatCard';
 
 export default function DashboardPage() {
   const opId = useStore((s) => s.currentOperatorId);
@@ -22,7 +23,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="card" style={{ background: 'var(--primary-soft)', borderColor: '#c5d8ff' }}>
+      <div className="card promo-card">
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0 }}>سجل السيارات</h3>
@@ -50,31 +51,17 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="tiles">
-        <div className="tile">
-          <div className="n">{todayVisits.length}</div>
-          <div className="l">زيارات اليوم</div>
-        </div>
-        <div className="tile">
-          <div className="n">{activeCars.length}</div>
-          <div className="l">سيارات حالية</div>
-        </div>
-        <div className="tile">
-          <div className="n">{employees.filter((e) => e.active).length}</div>
-          <div className="l">موظفون نشطون</div>
-        </div>
-        <div className="tile">
-          <div className="n">{pendingHandoffs.length}</div>
-          <div className="l">طلبات سائقين</div>
-        </div>
-        <div className="tile">
-          <div className="n">{incidents.length}</div>
-          <div className="l">بلاغات مفتوحة</div>
-        </div>
+      <div className="stat-grid">
+        <StatCard label="زيارات اليوم" value={todayVisits.length} icon="car" />
+        <StatCard label="سيارات حالية" value={activeCars.length} icon="pin" tone="teal" />
+        <StatCard label="موظفون نشطون" value={employees.filter((e) => e.active).length} icon="users" tone="violet" />
+        <StatCard label="طلبات سائقين" value={pendingHandoffs.length} icon="bell" tone="amber" />
+        <StatCard label="بلاغات مفتوحة" value={incidents.length} icon="shield" tone="amber" />
       </div>
 
       <div className="card">
-        <h2>لوحة اليوم — {op.name}</h2>
+        <div className="section-head"><div><h2>لوحة اليوم — {op.name}</h2><p>الإشغال والفريق في كل موقف</p></div></div>
+        <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -102,6 +89,7 @@ export default function DashboardPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="card">
@@ -111,6 +99,7 @@ export default function DashboardPage() {
             سجل السيارات
           </Link>
         </div>
+        <div className="table-wrap" style={{ marginTop: 12 }}>
         <table className="table">
           <thead>
             <tr>
@@ -131,6 +120,7 @@ export default function DashboardPage() {
             ))}
           </tbody>
         </table>
+        </div>
         {!activeCars.length && <div className="empty">لا سيارات حالياً</div>}
       </div>
     </>

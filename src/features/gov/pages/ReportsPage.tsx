@@ -1,4 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { FilterBar, type FilterField } from '@/shared/components/ui/filters';
+import { searchField } from '@/shared/components/ui/filters/fields';
+import { EmptyState } from '@/shared/components/ui/EmptyState';
+import { ListSkeleton } from '@/shared/components/ui/ListState';
+import { StatCard } from '@/shared/components/ui/StatCard';
+import { filterList } from '@/shared/hooks/filterList';
+import { useFilters } from '@/shared/hooks/useFilters';
 import { api } from '@/shared/lib/api';
 import { formatJod } from '@/shared/lib/format';
 
@@ -23,8 +31,16 @@ const OSTATUS: Record<string, string> = { pending: 'قيد المراجعة', ap
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function ReportsPage() {
-  const [from, setFrom] = useState(day(new Date(Date.now() - 90 * 86400_000)));
-  const [to, setTo] = useState(day(new Date()));
+  const [params, setParams] = useSearchParams();
+  const from = params.get('rfrom') || day(new Date(Date.now() - 90 * 86400_000));
+  const to = params.get('rto') || day(new Date());
+  const setRange = (k: 'rfrom' | 'rto', v: string) => setParams((p) => { const n = new URLSearchParams(p); if (v) n.set(k, v); else n.delete(k); return n; }, { replace: true });
+  const filters = useFilters();
+  const fields: FilterField[] = [
+    searchField('اسم المشغّل'),
+    { type: 'select', key: 'status', label: 'الترخيص', options: Object.entries(OSTATUS).map(([value, label]) => ({ value, label })) },
+    { type: 'sort', options: [{ value: 'visits', label: 'الأكثر زيارات' }, { value: 'name', label: 'الاسم' }, { value: 'amount_desc', label: 'الأعلى مستحقات' }] },
+  ];
   const [data, setData] = useState<Report | null>(null);
   const [error, setError] = useState('');
 
@@ -44,6 +60,9 @@ export default function ReportsPage() {
   }, [from, to]);
 
   const qs = `from=${from}&to=${to}`;
+  const opsFiltered = data ? filterList(data.operators, { ...filters.values, sort: 'name' }, (o) => ({ text: o.name, status: o.status })) : [];
+  const sort = filters.values.sort || 'visits';
+  const ops = sort === 'name' ? opsFiltered : [...opsFiltered].sort((a, b) => (sort === 'amount_desc' ? b.outstanding - a.outstanding : b.visits - a.visits));
   const maxRev = Math.max(1, ...(data?.revenueByKind.filter((r) => r.status === 'paid').map((r) => r.total) ?? [1]));
 
   return (
@@ -57,11 +76,11 @@ export default function ReportsPage() {
           <div className="row">
             <div className="field" style={{ margin: 0 }}>
               <label htmlFor="r-from">من</label>
-              <input id="r-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <input id="r-from" type="date" value={from} onChange={(e) => setRange('rfrom', e.target.value)} />
             </div>
             <div className="field" style={{ margin: 0 }}>
               <label htmlFor="r-to">إلى</label>
-              <input id="r-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+              <input id="r-to" type="date" value={to} onChange={(e) => setRange('rto', e.target.value)} />
             </div>
             <a className="btn" href={`/api/gov/reports/export.xlsx?${qs}`} data-testid="export-xlsx">
               تصدير Excel
@@ -74,13 +93,14 @@ export default function ReportsPage() {
         {error && <div className="reg-alert bad" style={{ marginTop: 10 }}>{error}</div>}
       </div>
 
+      {!data && !error && <ListSkeleton />}
       {data && (
         <>
-          <div className="tiles">
-            <div className="tile"><div className="n">{formatJod(data.totals.collected)}</div><div className="l">إيرادات محصّلة</div></div>
-            <div className="tile"><div className="n">{formatJod(data.totals.outstanding)}</div><div className="l">مستحقات</div></div>
-            <div className="tile"><div className="n">{data.totals.violations}</div><div className="l">مخالفات/بلاغات</div></div>
-            <div className="tile"><div className="n">{data.totals.visits}</div><div className="l">زيارات</div></div>
+          <div className="stat-grid">
+            <StatCard label="إيرادات محصّلة" value={formatJod(data.totals.collected)} icon="wallet" tone="teal" />
+            <StatCard label="مستحقات" value={formatJod(data.totals.outstanding)} icon="clock" tone="amber" />
+            <StatCard label="مخالفات/بلاغات" value={data.totals.violations} icon="shield" tone="violet" />
+            <StatCard label="زيارات" value={data.totals.visits} icon="car" />
           </div>
 
           <div className="card">
@@ -117,6 +137,8 @@ export default function ReportsPage() {
 
           <div className="card">
             <h3>أداء المشغّلين</h3>
+            <FilterBar fields={fields} filters={filters} count={ops.length} total={data.operators.length} />
+            {!ops.length && <EmptyState />}
             <div className="table-wrap">
               <table className="table">
                 <thead>
@@ -126,7 +148,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.operators.map((o) => (
+                  {ops.map((o) => (
                     <tr key={o.id}>
                       <td>{o.name}</td>
                       <td>{OSTATUS[o.status] || o.status}</td>

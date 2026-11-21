@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import { FilterBar, type FilterField } from '@/shared/components/ui/filters';
+import { dateField, searchField, statusField } from '@/shared/components/ui/filters/fields';
+import { EmptyState } from '@/shared/components/ui/EmptyState';
+import { StatCard } from '@/shared/components/ui/StatCard';
+import { filterList } from '@/shared/hooks/filterList';
+import { useFilters } from '@/shared/hooks/useFilters';
 import { Badge } from '@/shared/components/ui/Badge';
 import { LICENSE_STATUS_LABELS } from '@/shared/constants/labels';
 import { createOperator, setOperatorStatus, useStore } from '@/store';
@@ -8,6 +14,9 @@ const EMPTY = { name: '', area: '', username: '', password: '', siteName: '', si
 export default function OperatorsPage() {
   const operators = useStore((s) => s.operators);
   const employees = useStore((s) => s.employees);
+  const filters = useFilters();
+  const list = filterList(operators, filters.values, (o) => ({ text: `${o.name} ${o.licenseNo || ''} ${o.area}`, status: o.status, date: o.submittedAt }));
+  const fields: FilterField[] = [searchField('اسم الشركة، الترخيص أو المنطقة'), statusField(LICENSE_STATUS_LABELS), { type: 'sort', options: [{ value: 'name', label: 'الاسم' }, { value: 'newest', label: 'الأحدث تقديماً' }, { value: 'oldest', label: 'الأقدم تقديماً' }] }, dateField];
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -31,6 +40,13 @@ export default function OperatorsPage() {
   }
 
   return (
+    <>
+    <div className="stat-grid">
+      <StatCard label="المشغّلون" value={operators.length} icon="users" />
+      <StatCard label="مرخّصون" value={operators.filter((o) => o.status === 'approved').length} icon="shield" tone="teal" />
+      <StatCard label="موقوفون" value={operators.filter((o) => o.status === 'suspended').length} icon="clock" tone="amber" />
+    </div>
+    <FilterBar fields={fields} filters={filters} count={list.length} total={operators.length} />
     <div className="card">
       <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
@@ -66,7 +82,7 @@ export default function OperatorsPage() {
         </form>
       )}
 
-      <div className="table-wrap">
+      {!list.length ? <EmptyState /> : <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -79,7 +95,7 @@ export default function OperatorsPage() {
             </tr>
           </thead>
           <tbody>
-            {operators.map((o) => {
+            {list.map((o) => {
               const tone = o.status === 'approved' ? 'ok' : o.status === 'pending' ? 'warn' : 'bad';
               return (
                 <tr key={o.id}>
@@ -108,7 +124,8 @@ export default function OperatorsPage() {
             })}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
+    </>
   );
 }

@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import { FilterBar } from '@/shared/components/ui/filters';
+import { dateField, searchField, sortField, statusField } from '@/shared/components/ui/filters/fields';
+import { HANDOFF_STATUS_LABELS } from '@/shared/constants/labels';
+import { filterList } from '@/shared/hooks/filterList';
+import { useFilters } from '@/shared/hooks/useFilters';
+import { useFilterFields } from '@/shared/hooks/useFilterFields';
 import { Badge } from '@/shared/components/ui/Badge';
 import { acceptHandoff, empName, rejectHandoff, setAutoAcceptHandoffs, siteHasCapacity, siteName, siteOccupancy, useStore } from '@/store';
 import { formatDateTime } from '@/shared/lib/format';
@@ -10,8 +16,11 @@ export default function RequestsPage() {
   const employees = useStore((s) => s.employees);
   const myHandoffs = handoffs.filter((h) => h.operatorId === opId);
   const myEmps = employees.filter((e) => e.operatorId === opId && e.active);
-  const pending = myHandoffs.filter((h) => h.status === 'pending');
-  const others = myHandoffs.filter((h) => h.status !== 'pending');
+  const filters = useFilters();
+  const fields = [searchField('رقم اللوحة أو الإيصال'), statusField(HANDOFF_STATUS_LABELS), ...useFilterFields({ lots: true, staff: true }), sortField, dateField];
+  const list = filterList(myHandoffs, filters.values, (h) => ({ text: `${h.plate} ${h.id}`, status: h.status, siteId: h.siteId, employeeId: h.assignedEmployeeId, date: h.createdAt }));
+  const pending = list.filter((h) => h.status === 'pending');
+  const others = list.filter((h) => h.status !== 'pending');
   const [staffPick, setStaffPick] = useState<Record<string, string>>({});
 
   if (!op) return <div className="card empty">لا بيانات</div>;
@@ -68,6 +77,7 @@ export default function RequestsPage() {
         </div>
       </div>
 
+      <FilterBar fields={fields} filters={filters} count={list.length} total={myHandoffs.length} />
       <div className="card">
         <h2>صندوق طلبات التسليم من السائقين</h2>
         {!pending.length && <div className="empty">لا طلبات معلّقة حالياً</div>}

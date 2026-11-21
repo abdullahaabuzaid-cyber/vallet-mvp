@@ -1,8 +1,17 @@
 import { useState } from 'react';
+import type { Incident } from '@common/types';
 import { Badge } from '@/shared/components/ui/Badge';
+import { FilterBar, Pager } from '@/shared/components/ui/filters';
+import { dateField, kindField, searchField, sortField, statusField } from '@/shared/components/ui/filters/fields';
+import { ListState } from '@/shared/components/ui/ListState';
+import { StatCard } from '@/shared/components/ui/StatCard';
+import { filterQuery, useFilters } from '@/shared/hooks/useFilters';
+import { useServerList } from '@/shared/hooks/useServerList';
 import { INCIDENT_TYPE_LABELS, INCIDENT_STATUS_LABELS } from '@/shared/constants/labels';
 import { addIncident, operatorName, updateIncidentStatus, useStore } from '@/store';
 import { formatDate } from '@/shared/lib/format';
+
+const PAGE = 50;
 
 export default function IncidentsPage() {
   const incidents = useStore((s) => s.incidents);
@@ -14,6 +23,16 @@ export default function IncidentsPage() {
   const [amount, setAmount] = useState(1000);
   const [rowAmount, setRowAmount] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  const filters = useFilters();
+  const list = useServerList<Incident>('/api/incidents', filterQuery(filters.values, PAGE), incidents);
+  const fields = [
+    searchField('رقم البلاغ، الوصف، اللوحة أو المنطقة'),
+    statusField({ active: 'مفتوحة (جديد + تحقيق)', ...INCIDENT_STATUS_LABELS }),
+    kindField(INCIDENT_TYPE_LABELS),
+    { type: 'select' as const, key: 'operatorId', label: 'المشغّل', options: [{ value: 'none', label: 'غير مرخّص (ميداني)' }, ...operators.map((o) => ({ value: o.id, label: o.name }))] },
+    sortField,
+    dateField,
+  ];
 
   async function recordFine(e: React.FormEvent) {
     e.preventDefault();
@@ -34,13 +53,19 @@ export default function IncidentsPage() {
   }
 
   return (
+    <>
+    <div className="stat-grid">
+      <StatCard label="بلاغات مفتوحة" value={incidents.filter((i) => i.status === 'open').length} icon="bell" tone="amber" />
+      <StatCard label="قيد التحقيق" value={incidents.filter((i) => i.status === 'investigating').length} icon="search" />
+      <StatCard label="غرامات صادرة" value={incidents.filter((i) => i.status === 'fined').length} icon="wallet" tone="violet" />
+      <StatCard label="بلاغات غير مرخّصة" value={incidents.filter((i) => i.type === 'unlicensed').length} icon="pin" tone="teal" />
+    </div>
+    <FilterBar fields={fields} filters={filters} count={list.items.length} total={list.total} loading={list.loading}>
+      <button className="btn btn-primary" type="button" onClick={() => setShowFine(!showFine)}>
+        تسجيل مخالفة
+      </button>
+    </FilterBar>
     <div className="card">
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-        <h2 style={{ margin: 0 }}>البلاغات والمخالفات</h2>
-        <button className="btn btn-primary" type="button" onClick={() => setShowFine(!showFine)}>
-          تسجيل مخالفة
-        </button>
-      </div>
 
       {showFine && (
         <form onSubmit={recordFine} className="card" style={{ background: 'var(--surface-2)', boxShadow: 'none' }}>
@@ -74,6 +99,7 @@ export default function IncidentsPage() {
         </form>
       )}
 
+      <ListState loading={list.loading && !list.items.length} error={list.error} count={list.items.length}>
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -87,8 +113,8 @@ export default function IncidentsPage() {
             </tr>
           </thead>
           <tbody>
-            {incidents.map((i) => (
-              <tr key={i.id}>
+            {list.items.map((i) => (
+              <tr key={i.id} data-testid="incident-row">
                 <td>
                   {i.id.replace('inc-', 'I-')}
                   <div className="muted" style={{ maxWidth: 260 }}>{i.description}</div>
@@ -131,6 +157,9 @@ export default function IncidentsPage() {
           </tbody>
         </table>
       </div>
+      </ListState>
+      <Pager filters={filters} total={list.total} pageSize={PAGE} />
     </div>
+    </>
   );
 }

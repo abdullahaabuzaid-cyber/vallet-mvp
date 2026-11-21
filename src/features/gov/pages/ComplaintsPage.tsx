@@ -1,9 +1,16 @@
 import { useState } from 'react';
+import type { Complaint, ComplaintStatus } from '@common/types';
 import { Badge } from '@/shared/components/ui/Badge';
+import { FilterBar, Pager } from '@/shared/components/ui/filters';
+import { dateField, kindField, searchField, sortField, statusField } from '@/shared/components/ui/filters/fields';
+import { ListState } from '@/shared/components/ui/ListState';
+import { StatCard } from '@/shared/components/ui/StatCard';
+import { filterQuery, useFilters } from '@/shared/hooks/useFilters';
+import { useFilterFields } from '@/shared/hooks/useFilterFields';
+import { useServerList } from '@/shared/hooks/useServerList';
 import { COMPLAINT_CATEGORY_LABELS, COMPLAINT_STATUS_LABELS } from '@/shared/constants/labels';
 import { formatDateTime } from '@/shared/lib/format';
 import { operatorName, siteName, updateComplaint, useStore } from '@/store';
-import type { ComplaintStatus } from '@common/types';
 
 const TONE: Record<ComplaintStatus, 'ok' | 'warn' | 'bad' | 'info'> = {
   open: 'bad',
@@ -12,40 +19,39 @@ const TONE: Record<ComplaintStatus, 'ok' | 'warn' | 'bad' | 'info'> = {
   rejected: 'info',
 };
 
+const PAGE = 50;
+
 export default function ComplaintsPage() {
   const complaints = useStore((s) => s.complaints);
   const ratings = useStore((s) => s.ratings);
   const visits = useStore((s) => s.visits);
-  const [filter, setFilter] = useState<'active' | ComplaintStatus | 'all'>('active');
+  const filters = useFilters({ status: 'active' });
+  const list = useServerList<Complaint>('/api/complaints', filterQuery(filters.values, PAGE), complaints);
   const [responses, setResponses] = useState<Record<number, string>>({});
-
-  const list = complaints.filter((c) =>
-    filter === 'all' ? true : filter === 'active' ? c.status === 'open' || c.status === 'investigating' : c.status === filter
-  );
+  const fields = [
+    searchField('رقم الشكوى، النص، هاتف السائق أو اللوحة'),
+    statusField({ active: 'المفتوحة (جديدة + متابعة)', ...COMPLAINT_STATUS_LABELS }),
+    kindField(COMPLAINT_CATEGORY_LABELS, 'التصنيف'),
+    ...useFilterFields({ operators: true, lots: true }),
+    sortField,
+    dateField,
+  ];
   const avg = ratings.length ? ratings.reduce((a, r) => a + r.stars, 0) / ratings.length : 0;
 
   return (
     <div className="reg-page">
-      <div className="tiles">
-        <div className="tile"><div className="n">{complaints.filter((c) => c.status === 'open').length}</div><div className="l">شكاوى جديدة</div></div>
-        <div className="tile"><div className="n">{complaints.filter((c) => c.status === 'investigating').length}</div><div className="l">قيد المتابعة</div></div>
-        <div className="tile"><div className="n">{complaints.filter((c) => c.status === 'resolved').length}</div><div className="l">تمت المعالجة</div></div>
-        <div className="tile"><div className="n">{avg ? avg.toFixed(1) : '—'}</div><div className="l">متوسط التقييم ({ratings.length})</div></div>
+      <div className="stat-grid">
+        <StatCard label="شكاوى جديدة" value={complaints.filter((c) => c.status === 'open').length} icon="message" tone="amber" />
+        <StatCard label="قيد المتابعة" value={complaints.filter((c) => c.status === 'investigating').length} icon="clock" />
+        <StatCard label="تمت المعالجة" value={complaints.filter((c) => c.status === 'resolved').length} icon="check" tone="teal" />
+        <StatCard label={`متوسط التقييم (${ratings.length})`} value={avg ? `★ ${avg.toFixed(1)}` : '—'} icon="spark" tone="violet" />
       </div>
+      <FilterBar fields={fields} filters={filters} count={list.items.length} total={list.total} loading={list.loading} />
       <div className="card">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <h2 style={{ margin: 0 }}>طابور الشكاوى</h2>
-          <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} aria-label="تصفية">
-            <option value="active">المفتوحة</option>
-            <option value="all">الكل</option>
-            {Object.entries(COMPLAINT_STATUS_LABELS).map(([k, l]) => (
-              <option key={k} value={k}>{l}</option>
-            ))}
-          </select>
-        </div>
-        {!list.length && <div className="empty">لا شكاوى</div>}
+        <div className="section-head"><h2>طابور الشكاوى</h2></div>
+        <ListState loading={list.loading && !list.items.length} error={list.error} count={list.items.length}>
         <div className="stack" style={{ marginTop: 12 }}>
-          {list.map((c) => {
+          {list.items.map((c) => {
             const v = c.visitId ? visits.find((x) => x.id === c.visitId) : undefined;
             return (
               <div key={c.id} className="complaint-card" data-testid="complaint">
@@ -88,6 +94,8 @@ export default function ComplaintsPage() {
             );
           })}
         </div>
+        </ListState>
+        <Pager filters={filters} total={list.total} pageSize={PAGE} />
       </div>
     </div>
   );

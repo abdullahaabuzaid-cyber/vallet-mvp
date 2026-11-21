@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { InvoiceTable } from '@/shared/components/billing/InvoiceTable';
+import { InvoiceList } from '@/shared/components/billing/InvoiceList';
+import { StatCard } from '@/shared/components/ui/StatCard';
 import { formatJod } from '@/shared/lib/format';
 import { issueFine, useStore } from '@/store';
 
 export default function PaymentsPage() {
   const invoices = useStore((s) => s.invoices);
   const operators = useStore((s) => s.operators);
-  const [filter, setFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
   const [open, setOpen] = useState(false);
   const [operatorId, setOperatorId] = useState('');
   const [payerName, setPayerName] = useState('');
@@ -14,30 +14,22 @@ export default function PaymentsPage() {
   const [desc, setDesc] = useState('');
 
   const sum = (pred: (i: (typeof invoices)[number]) => boolean) => invoices.filter(pred).reduce((a, i) => a + i.amount, 0);
-  const list = invoices.filter((i) => filter === 'all' || i.status === filter);
 
   return (
     <div className="reg-page">
       <div className="test-mode-banner">وضع تجريبي — المبالغ توضيحية والدفع عبر بوابة وهمية</div>
-      <div className="tiles">
-        <div className="tile"><div className="n">{formatJod(sum((i) => i.status === 'paid'))}</div><div className="l">إجمالي المحصّل</div></div>
-        <div className="tile"><div className="n">{formatJod(sum((i) => i.status === 'paid' && i.kind === 'license_fee'))}</div><div className="l">رسوم ترخيص</div></div>
-        <div className="tile"><div className="n">{formatJod(sum((i) => i.status === 'paid' && i.kind === 'fine'))}</div><div className="l">غرامات محصّلة</div></div>
-        <div className="tile"><div className="n">{formatJod(sum((i) => i.status === 'unpaid'))}</div><div className="l">مستحقات</div></div>
+      <div className="stat-grid">
+        <StatCard label="إجمالي المحصّل" value={formatJod(sum((i) => i.status === 'paid'))} icon="wallet" tone="teal" />
+        <StatCard label="رسوم ترخيص" value={formatJod(sum((i) => i.status === 'paid' && i.kind === 'license_fee'))} icon="file" />
+        <StatCard label="غرامات محصّلة" value={formatJod(sum((i) => i.status === 'paid' && i.kind === 'fine'))} icon="shield" tone="violet" />
+        <StatCard label="مستحقات" value={formatJod(sum((i) => i.status === 'unpaid'))} icon="clock" tone="amber" />
       </div>
       <div className="card">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <h2 style={{ margin: 0 }}>الفواتير والإيرادات</h2>
-          <div className="row">
-            <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} aria-label="تصفية">
-              <option value="all">الكل</option>
-              <option value="unpaid">غير مدفوعة</option>
-              <option value="paid">مدفوعة</option>
-            </select>
-            <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)}>
-              {open ? 'إغلاق' : '+ إصدار غرامة'}
-            </button>
-          </div>
+        <div className="section-head">
+          <h2>الفواتير والإيرادات</h2>
+          <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)}>
+            {open ? 'إلغاء' : '+ إصدار غرامة'}
+          </button>
         </div>
         {open && (
           <form
@@ -80,9 +72,7 @@ export default function PaymentsPage() {
             <button className="btn btn-danger" type="submit">إصدار الفاتورة</button>
           </form>
         )}
-        <div style={{ marginTop: 12 }}>
-          <InvoiceTable invoices={list} showPayer canPay />
-        </div>
+        <InvoiceList gov />
       </div>
     </div>
   );

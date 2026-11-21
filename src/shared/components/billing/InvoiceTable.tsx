@@ -8,7 +8,6 @@ import type { Invoice } from '@common/types';
 
 export function InvoiceTable({ invoices, canPay, showPayer }: { invoices: Invoice[]; canPay?: boolean; showPayer?: boolean }) {
   const [paying, setPaying] = useState<Invoice | null>(null);
-  if (!invoices.length) return <div className="empty">لا فواتير</div>;
   return (
     <>
       <div className="table-wrap">

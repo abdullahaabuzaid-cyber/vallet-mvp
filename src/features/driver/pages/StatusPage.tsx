@@ -5,6 +5,8 @@ import { COMPLAINT_CATEGORY_LABELS, COMPLAINT_STATUS_LABELS, HANDOFF_STATUS_LABE
 import { cancelHandoff, empName, fileComplaint, operatorName, rateVisit, requestReturn, siteName, useStore } from '@/store';
 import { formatDateTime } from '@/shared/lib/format';
 import type { ComplaintCategory, HandoffRequest, Visit } from '@common/types';
+import { EmptyState } from '@/shared/components/ui/EmptyState';
+import { useFilters } from '@/shared/hooks/useFilters';
 
 const TONE: Record<string, 'ok' | 'warn' | 'bad' | 'info' | 'default'> = {
   pending: 'warn',
@@ -115,6 +117,7 @@ export default function StatusPage() {
   const driverAuth = useStore((s) => s.driverAuth);
   const handoffs = useStore((s) => s.handoffs);
   const visits = useStore((s) => s.visits);
+  const filters = useFilters();
 
   if (!driverAuth?.verified) {
     return (
@@ -131,17 +134,33 @@ export default function StatusPage() {
   // Items = handoffs (with their visit) + walk-in visits linked by phone
   const linkedVisitIds = new Set(handoffs.map((h) => h.visitId).filter(Boolean));
   const walkIns = visits.filter((v) => !linkedVisitIds.has(v.id) && !v.handoffId);
-  const items: { key: string; h?: HandoffRequest; v?: Visit; at: string }[] = [
+  const all: { key: string; h?: HandoffRequest; v?: Visit; at: string }[] = [
     ...handoffs.map((h) => ({ key: h.id, h, v: h.visitId ? visits.find((x) => x.id === h.visitId) : undefined, at: h.createdAt })),
     ...walkIns.map((v) => ({ key: v.id, v, at: v.checkInAt })),
   ].sort((a, b) => b.at.localeCompare(a.at));
+  const isDone = (i: (typeof all)[number]) => !!i.v?.checkOutAt || (!!i.h && i.h.status !== 'pending' && i.h.status !== 'accepted');
+  const needle = filters.values.q.replace(/[\s-]/g, '');
+  const items = all
+    .filter((i) => !filters.values.status || (filters.values.status === 'done') === isDone(i))
+    .filter((i) => !needle || (i.v?.plate || i.h?.plate || '').replace(/[\s-]/g, '').includes(needle));
 
   return (
     <div className="phone-shell">
       <div className="card">
         <h2>طلباتي</h2>
         <p className="muted" style={{ marginTop: 0 }}>الحالة تتحدّث مباشرة لما الموظف يستلم أو يجهّز سيارتك.</p>
-        {!items.length && <div className="empty">لا طلبات بعد</div>}
+        {all.length > 0 && (
+          <div className="driver-filter">
+            <div className="segmented" role="group" aria-label="تصفية الطلبات">
+              {[['', 'الكل'], ['active', 'الحالية'], ['done', 'المكتملة']].map(([k, l]) => (
+                <button key={k} type="button" className={filters.values.status === k ? 'active' : ''} onClick={() => filters.set('status', k)}>{l}</button>
+              ))}
+            </div>
+            {all.length > 3 && <input type="search" value={filters.values.q} onChange={(e) => filters.set('q', e.target.value)} placeholder="ابحث برقم اللوحة" aria-label="بحث برقم اللوحة" />}
+            <span className="muted tiny">{items.length} من {all.length}</span>
+          </div>
+        )}
+        {!items.length && <EmptyState icon="car" title={all.length ? 'لا طلبات مطابقة' : 'لا طلبات بعد'} description={all.length ? 'غيّر التصفية لعرض طلباتك الأخرى.' : 'اختر موقفاً مرخّصاً من الخريطة واطلب التسليم.'} />}
         <div className="stack">
           {items.map(({ key, h, v }) => {
             const st = stages(h, v);

@@ -1,57 +1,41 @@
-import { useMemo, useState } from 'react';
-import { empName, operatorName, useStore } from '@/store';
-import { formatDate, formatTime } from '@/shared/lib/format';
+import { useState } from 'react';
+import type { Visit } from '@common/types';
+import { FilterBar, Pager, type FilterField } from '@/shared/components/ui/filters';
+import { dateField, searchField, statusField, VISIT_SORT, VISIT_STATUS } from '@/shared/components/ui/filters/fields';
+import { ListState } from '@/shared/components/ui/ListState';
+import { CarLogList } from '@/shared/components/visits/CarLogList';
+import { VisitDetailDrawer } from '@/shared/components/visits/VisitDetailDrawer';
+import { filterQuery, useFilters } from '@/shared/hooks/useFilters';
+import { useFilterFields } from '@/shared/hooks/useFilterFields';
+import { useServerList } from '@/shared/hooks/useServerList';
+import { useStore } from '@/store';
 
+const PAGE = 50;
+
+/** Gov audit of every visit across operators (server-side filters). */
 export default function AuditPage() {
-  const visits = useStore((s) => s.visits);
-  const [q, setQ] = useState('');
-
-  const results = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    if (!query) return visits.slice(0, 15);
-    return visits.filter((v) => {
-      const emp = empName(v.checkInBy).toLowerCase();
-      return (
-        v.plate.toLowerCase().includes(query) ||
-        v.receiptNo.toLowerCase().includes(query) ||
-        emp.includes(query) ||
-        operatorName(v.operatorId).toLowerCase().includes(query)
-      );
-    });
-  }, [visits, q]);
-
+  const version = useStore((s) => s.visits);
+  const filters = useFilters();
+  const list = useServerList<Visit>('/api/visits', filterQuery(filters.values, PAGE), version);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const fields: FilterField[] = [
+    searchField('الإيصال، اللوحة، الموظف أو المشغّل'),
+    statusField(VISIT_STATUS),
+    ...useFilterFields({ operators: true, lots: true }),
+    VISIT_SORT,
+    dateField,
+  ];
+  const selected = list.items.find((v) => v.id === selectedId);
   return (
-    <div className="card">
-      <h2>تدقيق الزيارات</h2>
-      <div className="field">
-        <label>رقم الإيصال / اللوحة / الموظف</label>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="12-34567 أو V-240871 أو أحمد" />
+    <>
+      <FilterBar fields={fields} filters={filters} count={list.items.length} total={list.total} loading={list.loading} />
+      <div className="card">
+        <ListState loading={list.loading && !list.items.length} error={list.error} count={list.items.length}>
+          <CarLogList visits={list.items} onSelect={setSelectedId} showOperator />
+        </ListState>
+        <Pager filters={filters} total={list.total} pageSize={PAGE} />
       </div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>الإيصال</th>
-            <th>اللوحة</th>
-            <th>المشغّل</th>
-            <th>الموظف</th>
-            <th>دخول</th>
-            <th>خروج</th>
-          </tr>
-        </thead>
-        <tbody>
-          {results.map((v) => (
-            <tr key={v.id}>
-              <td>{v.receiptNo}</td>
-              <td>{v.plate}</td>
-              <td>{operatorName(v.operatorId)}</td>
-              <td>{empName(v.checkInBy)}</td>
-              <td>{formatDate(v.checkInAt)} {formatTime(v.checkInAt)}</td>
-              <td>{v.checkOutAt ? formatTime(v.checkOutAt) : '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {!results.length && <div className="empty">لا نتائج</div>}
-    </div>
+      {selected && <VisitDetailDrawer visit={selected} onClose={() => setSelectedId(null)} />}
+    </>
   );
 }

@@ -1,4 +1,10 @@
 import { Fragment, useState } from 'react';
+import { FilterBar, type FilterField } from '@/shared/components/ui/filters';
+import { searchField, statusField } from '@/shared/components/ui/filters/fields';
+import { EmptyState } from '@/shared/components/ui/EmptyState';
+import { filterList } from '@/shared/hooks/filterList';
+import { useFilters } from '@/shared/hooks/useFilters';
+import { useFilterFields } from '@/shared/hooks/useFilterFields';
 import { Badge } from '@/shared/components/ui/Badge';
 import { addEmployee, docsProgress, documentFileUrl, emptyStaffDocs, siteName, toggleEmployee, uploadEmployeeDoc, useStore } from '@/store';
 import { DOC_STATUS_LABELS, REVIEW_STATUS_LABELS } from '@/shared/constants/labels';
@@ -16,7 +22,10 @@ export default function EmployeesPage() {
   const opId = useStore((s) => s.currentOperatorId);
   const op = useStore((s) => s.operators.find((o) => o.id === opId));
   const employees = useStore((s) => s.employees);
-  const mine = employees.filter((e) => e.operatorId === opId);
+  const filters = useFilters();
+  const allMine = employees.filter((e) => e.operatorId === opId);
+  const mine = filterList(allMine, filters.values, (e) => ({ text: `${e.name} ${e.nationalId} ${e.phone} ${e.username || ''}`, status: e.reviewStatus, kind: e.active ? 'active' : 'inactive', siteId: e.siteId }));
+  const fields: FilterField[] = [searchField('اسم الموظف، الهوية، الهاتف أو اسم المستخدم'), statusField(REVIEW_STATUS_LABELS), { type: 'select', key: 'kind', label: 'التفعيل', options: [{ value: 'active', label: 'نشط' }, { value: 'inactive', label: 'غير نشط' }] }, ...useFilterFields({ lots: true }), { type: 'sort', options: [{ value: 'name', label: 'الاسم' }] }];
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [nid, setNid] = useState('');
@@ -127,6 +136,9 @@ export default function EmployeesPage() {
           </form>
         )}
 
+        <FilterBar fields={fields} filters={filters} count={mine.length} total={allMine.length} />
+        {!mine.length && <EmptyState />}
+        <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -219,6 +231,7 @@ export default function EmployeesPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

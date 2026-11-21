@@ -1,6 +1,17 @@
 import { Badge } from '@/shared/components/ui/Badge';
 import { checkOut, empName, markReady, useStore } from '@/store';
 import { durationLabel } from '@/shared/lib/format';
+import { FilterBar, type FilterField } from '@/shared/components/ui/filters';
+import { searchField, statusField } from '@/shared/components/ui/filters/fields';
+import { EmptyState } from '@/shared/components/ui/EmptyState';
+import { filterList } from '@/shared/hooks/filterList';
+import { useFilters } from '@/shared/hooks/useFilters';
+
+const FIELDS: FilterField[] = [
+  searchField('اللوحة أو الإيصال'),
+  statusField({ parked: 'مركونة', return_pending: 'مطلوبة للإرجاع', ready: 'جاهزة عند المدخل' }),
+  { type: 'sort', options: [{ value: 'priority', label: 'المطلوبة أولاً' }, { value: 'newest', label: 'الأحدث دخولاً' }, { value: 'oldest', label: 'الأقدم دخولاً' }, { value: 'plate', label: 'رقم اللوحة' }] },
+];
 
 export default function CarsPage() {
   const emp = useStore((s) => s.employees.find((e) => e.id === s.currentEmployeeId));
@@ -9,12 +20,16 @@ export default function CarsPage() {
       .filter((v) => (emp?.siteId ? v.siteId === emp.siteId : v.operatorId === emp?.operatorId) && !v.checkOutAt)
       .sort((a, b) => Number(!!b.returnRequestedAt) - Number(!!a.returnRequestedAt))
   );
+  const filters = useFilters();
+  const filtered = filterList(cars, filters.values, (v) => ({ text: `${v.plate} ${v.receiptNo}`, status: v.readyAt ? 'ready' : v.returnRequestedAt ? 'return_pending' : 'parked', date: v.checkInAt }));
+  // "priority" keeps the requested-first order from the store selector.
+  const shown = !filters.values.sort || filters.values.sort === 'priority' ? cars.filter((v) => filtered.includes(v)) : filtered;
 
   return (
-    <div className="phone-shell">
+    <div className="staff-page">
+      <FilterBar fields={FIELDS} filters={filters} count={shown.length} total={cars.length} />
       <div className="card">
-        <h2>السيارات الحالية</h2>
-        <p className="muted">في عهدة الموقع الآن — {cars.length}. السيارات المطلوبة للإرجاع تظهر أولاً.</p>
+        <div className="section-head"><div><h2>السيارات الحالية</h2><p>في عهدة الموقع الآن — {cars.length}. السيارات المطلوبة للإرجاع تظهر أولاً.</p></div></div>
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -27,7 +42,7 @@ export default function CarsPage() {
               </tr>
             </thead>
             <tbody>
-              {cars.map((v) => (
+              {shown.map((v) => (
                 <tr key={v.id}>
                   <td>{v.plate}</td>
                   <td>{v.receiptNo}</td>
@@ -55,7 +70,7 @@ export default function CarsPage() {
             </tbody>
           </table>
         </div>
-        {!cars.length && <div className="empty">لا سيارات حالياً</div>}
+        {!shown.length && <EmptyState title={cars.length ? 'لا نتائج مطابقة' : 'لا سيارات حالياً'} icon="car" description={cars.length ? 'غيّر الفلاتر أو امسحها.' : 'أي سيارة تستلمها تظهر هنا مباشرة.'} />}
       </div>
     </div>
   );
