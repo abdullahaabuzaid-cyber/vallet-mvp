@@ -4,7 +4,7 @@ export async function filterChecks({ BASE, gov, op, plate, ok, settle }) {
   await settle(gov.p);
   await gov.p.getByTestId('filter-search').fill(plate.replace('-', ''));
   await gov.p.waitForURL((u) => u.searchParams.get('q') === plate.replace('-', ''), { timeout: 5000 });
-  await gov.p.waitForTimeout(700);
+  await gov.p.waitForFunction((p) => { const r = [...document.querySelectorAll('[data-testid=visit-row]')]; return r.length >= 1 && r.every((e) => e.textContent.includes(p)); }, plate, { timeout: 10000 }).catch(() => {});
   const rows = gov.p.getByTestId('visit-row');
   const rowTexts = await rows.allInnerTexts();
   ok('filter: search by plate (server) narrows the car log', rowTexts.length >= 1 && rowTexts.every((t) => t.includes(plate)), `${rowTexts.length} rows`);
