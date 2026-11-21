@@ -7,6 +7,8 @@ import { bad, str } from '../../utils/http.ts';
 import { issueInvoice } from '../payments/invoices.service.ts';
 import { notifyOperator } from '../realtime/notify.ts';
 import { publish } from '../realtime/sse.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { listLicenses } from './licenses.service.ts';
 
 export const licensesRouter = Router();
 
@@ -22,6 +24,11 @@ licensesRouter.post('/operator/submit', requireRole('operator'), async (req, res
 
 /** Mounted under /api/gov (gov-only). */
 export const licensesGovRouter = Router();
+
+/** Licence applications with filters. */
+licensesGovRouter.get('/licenses', async (req, res) => {
+  res.json(await listLicenses(listParams(req)));
+});
 
 /** Approve: issue licence number + expiry, accept uploaded docs, bill the yearly fee on first approval. */
 licensesGovRouter.post('/operators/:id/approve', async (req, res) => {

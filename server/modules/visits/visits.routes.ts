@@ -6,8 +6,15 @@ import { bad } from '../../utils/http.ts';
 import { notifyOperator } from '../realtime/notify.ts';
 import { publish } from '../realtime/sse.ts';
 import { checkIn, staffVisit, visitForUser } from './visits.service.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { listVisits } from './visits.list.ts';
 
 export const visitsRouter = Router();
+
+/** Car log with filters (see utils/listQuery). */
+visitsRouter.get('/visits', requireRole('gov', 'operator', 'staff'), async (req, res) => {
+  res.json(await listVisits(req.user!, listParams(req)));
+});
 
 visitsRouter.post('/visits/:id/request-return', requireRole('driver', 'staff', 'operator'), async (req, res) => {
   const v = await visitForUser(String(req.params.id), req.user!);

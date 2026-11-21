@@ -7,8 +7,15 @@ import { publish } from '../realtime/sse.ts';
 import { invoicePdf } from './invoice.pdf.ts';
 import { invoiceForUser, issueInvoice } from './invoices.service.ts';
 import { confirmPayment, startCheckout } from './payments.service.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { listInvoices } from './invoices.list.ts';
 
 export const paymentsRouter = Router();
+
+/** Invoices list with filters (gov: all; operator: own). */
+paymentsRouter.get('/invoices', requireRole('operator', 'gov'), async (req, res) => {
+  res.json(await listInvoices(req.user!, listParams(req)));
+});
 
 paymentsRouter.post('/invoices/:id/checkout', requireRole('operator', 'gov'), async (req, res) => {
   const { inv, ref } = await startCheckout(Number(req.params.id), req.user!);

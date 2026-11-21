@@ -6,11 +6,18 @@ import { bad, str } from '../../utils/http.ts';
 import { optionalNumber } from '../../utils/validation.ts';
 import { issueInvoice } from '../payments/invoices.service.ts';
 import { publish } from '../realtime/sse.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { listIncidents } from './incidents.service.ts';
 
 const INCIDENT_TYPES = ['damage', 'lost_keys', 'delay', 'unlicensed', 'other'];
 const INCIDENT_STATUSES = ['open', 'investigating', 'closed', 'fined'];
 
 export const incidentsRouter = Router();
+
+/** Incidents list with filters (gov: all; operator/staff: own). */
+incidentsRouter.get('/incidents', requireRole('gov', 'operator', 'staff'), async (req, res) => {
+  res.json(await listIncidents(req.user!, listParams(req)));
+});
 
 /** Staff/operator/gov reports an incident (incl. unlicensed valet with location). */
 incidentsRouter.post('/incidents', requireRole('staff', 'gov', 'operator'), async (req, res) => {

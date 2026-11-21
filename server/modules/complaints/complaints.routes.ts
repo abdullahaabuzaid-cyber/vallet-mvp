@@ -4,11 +4,18 @@ import { requireRole } from '../../middleware/auth.ts';
 import { bad, str } from '../../utils/http.ts';
 import { publish } from '../realtime/sse.ts';
 import { visitForUser } from '../visits/visits.service.ts';
+import { listParams } from '../../utils/listQuery.ts';
+import { listComplaints } from './complaints.service.ts';
 
 const COMPLAINT_CATEGORIES = ['damage', 'delay', 'lost_item', 'behavior', 'overcharge', 'unlicensed', 'other'];
 const COMPLAINT_STATUSES = ['open', 'investigating', 'resolved', 'rejected'];
 
 export const complaintsRouter = Router();
+
+/** Complaints list with filters (gov: all; operator: own). */
+complaintsRouter.get('/complaints', requireRole('gov', 'operator'), async (req, res) => {
+  res.json(await listComplaints(req.user!, listParams(req)));
+});
 
 /** Driver files a complaint (optionally linked to a visit or a lot). */
 complaintsRouter.post('/complaints', requireRole('driver'), async (req, res) => {
