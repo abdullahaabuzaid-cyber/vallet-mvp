@@ -1,4 +1,5 @@
 import type { Role } from '@common/types';
+import type { IconName } from '../ui/Icon';
 
 export const ROLE_LABELS: Record<Role, string> = {
   gov: 'الهيئة',
@@ -39,4 +40,11 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/gov/reports', label: 'التقارير' },
   ],
   driver: [],
+};
+
+/** Icon per route segment (sidebar + page heading). */
+export const NAV_ICONS: Record<string, IconName> = {
+  alerts: 'bell', map: 'map', licenses: 'shield', operators: 'users', visits: 'car', incidents: 'shield',
+  complaints: 'message', payments: 'wallet', reports: 'chart', requests: 'bell', employees: 'users',
+  license: 'file', feedback: 'message', scan: 'scan', checkin: 'arrow', checkout: 'arrow', cars: 'car', incident: 'shield',
 };
